@@ -133,13 +133,7 @@ h1 {
   background: linear-gradient(90deg, rgba(48,209,88,0.95), rgba(122,162,255,0.95));
   box-shadow: 0 14px 28px rgba(0,0,0,0.25);
 }
-.material-quick {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-}
+/* removed: quick filter buttons */
 
 .btn {
   border: 1px solid var(--border);
@@ -165,7 +159,7 @@ h1 {
 .controls {
   margin-top: 14px;
   display: grid;
-  grid-template-columns: 140px 200px 1fr 160px;
+  grid-template-columns: 200px 1fr 160px;
   gap: 12px;
 }
 .controls.hidden { display: none; }

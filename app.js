@@ -1,7 +1,6 @@
 /* global TRAVAUX_ITEMS */
 
 const STORAGE_KEY = "travaux63b_comments_v1";
-const SHARE_PREFIX = "data=";
 const VIEW_KEY = "travaux63b_view_v1";
 
 function eur(cents) {
@@ -38,22 +37,6 @@ function setStickyHeaderOffset() {
 }
 
 function loadState() {
-  // URL share import: #data=...
-  try {
-    const hash = (window.location.hash || "").replace(/^#/, "");
-    if (hash.startsWith(SHARE_PREFIX)) {
-      const payload = decodeURIComponent(hash.slice(SHARE_PREFIX.length));
-      const json = JSON.parse(atob(payload));
-      if (json && typeof json === "object") {
-        // persist and clear hash so user doesn't keep re-importing
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
-        history.replaceState(null, "", window.location.pathname + window.location.search);
-      }
-    }
-  } catch (_) {
-    // ignore
-  }
-
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
@@ -96,60 +79,6 @@ function applyItemDefaults(items, state) {
   return state;
 }
 
-const BOUGHT_GROUPS = [
-  {
-    id: "communs",
-    title: "Parties communes — déjà acheté",
-    levels: [
-      {
-        id: "confirmed",
-        title: "✅ Confirmé",
-        defaultChecked: true,
-        items: [
-          { id: "spots", label: "4 × spots détecteur" },
-          { id: "cable", label: "câble (alimentation)" },
-          { id: "cavaliers", label: "cavaliers" },
-          { id: "disjoncteur", label: "disjoncteur" },
-          { id: "boitier-derivation", label: "boîtier + boîte de dérivation" },
-          { id: "enduit", label: "enduit (au moins rebouchage / lissage mentionné)" },
-          { id: "protections-dechets", label: "protections + consommables + évacuation déchets (sacs/gravats)" },
-        ],
-      },
-      {
-        id: "probable",
-        title: "☑️ Très probable (car communs terminés)",
-        defaultChecked: false,
-        items: [
-          { id: "peinture", label: "Peinture : fixateur/sous-couche, murs, plafonds (+ anti-humidité localement)" },
-          { id: "mur", label: "Mur : toile de verre + colle, bandes/angles si reprises" },
-          { id: "sol", label: "Sol : carrelage, colle carrelage, joints, primaire, croisillons/cales" },
-          { id: "finitions-sol", label: "Finitions sol : ragréage/autonivelant (si besoin), profilés/seuils/nez de marche, silicone" },
-          { id: "fenetres", label: "Fenêtres communs : polycarbonate/plexi ou vitrage + mastic/joints/parecloses + quincaillerie" },
-          { id: "porte-acces", label: "Porte immeuble / accès : serrure + cylindre, gâche, digicode/clavier, alim + câble + goulotte, renforts/paumelles" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "toiture",
-    title: "Colmatage toiture / cheminée — déjà acheté",
-    levels: [
-      {
-        id: "probable",
-        title: "☑️ Très probable (car toiture “finie”)",
-        defaultChecked: false,
-        items: [
-          { id: "bandes", label: "bandes / membranes d’étanchéité (points singuliers)" },
-          { id: "resine", label: "résine / peinture d’étanchéité / hydrofuge" },
-          { id: "mastics", label: "mastic-colle toiture, silicone, mousse expansive" },
-          { id: "petites-reprises", label: "petites reprises : visserie, éventuellement tuiles / liteaux" },
-          { id: "cheminee", label: "cheminée : reprise solin/bavette + étanchéité périphérique" },
-        ],
-      },
-    ],
-  },
-];
-
 const PLANNING_WEEKS = [
   { id: "S1", range: "15–26 jan", tasks: ["Dépose/déblai appart + traçage complet", "Ouverture séjour ↔ chambre 1 (+ reprises immédiates)", "Commandes “long lead” : volets, clim, Velux, escalier"] },
   { id: "S2", range: "27 jan–9 fév", tasks: ["Élec 1ère passe (saignées/boîtes/gaines/tirages principaux)", "Plomberie 1ère passe (cuisine + SDB + préparation WC)"] },
@@ -167,7 +96,6 @@ const PLANNING_WEEKS = [
 
 function getFeaturesState(state) {
   if (!state.__features || typeof state.__features !== "object") state.__features = {};
-  if (!state.__features.bought || typeof state.__features.bought !== "object") state.__features.bought = {};
   if (!state.__features.planning || typeof state.__features.planning !== "object") state.__features.planning = {};
   return state.__features;
 }
@@ -178,15 +106,6 @@ function applyFeatureDefaults(state) {
   if (meta.featuresAppliedVersion === version) return state;
 
   const features = getFeaturesState(state);
-  // bought items defaults
-  for (const g of BOUGHT_GROUPS) {
-    for (const lvl of g.levels) {
-      for (const it of lvl.items) {
-        const id = `bought_${g.id}_${lvl.id}_${it.id}`;
-        if (!features.bought[id]) features.bought[id] = { checked: !!lvl.defaultChecked, comment: "" };
-      }
-    }
-  }
   // planning task defaults
   for (const w of PLANNING_WEEKS) {
     for (let i = 0; i < w.tasks.length; i += 1) {
@@ -225,73 +144,6 @@ function wireViews() {
   });
   const saved = localStorage.getItem(VIEW_KEY);
   setView(saved || "materials");
-}
-
-function renderBoughtFeatures(state) {
-  const container = document.getElementById("boughtFeatures");
-  if (!container) return;
-  const features = getFeaturesState(state);
-  container.innerHTML = "";
-
-  for (const g of BOUGHT_GROUPS) {
-    const gWrap = document.createElement("div");
-    gWrap.className = "feature-group";
-
-    const gHead = document.createElement("div");
-    gHead.className = "feature-group-header";
-    gHead.textContent = g.title;
-    gWrap.appendChild(gHead);
-
-    for (const lvl of g.levels) {
-      const lvlWrap = document.createElement("div");
-      lvlWrap.className = "feature-level";
-
-      const lvlTitle = document.createElement("div");
-      lvlTitle.className = "feature-level-title";
-      lvlTitle.textContent = lvl.title;
-      lvlWrap.appendChild(lvlTitle);
-
-      for (const it of lvl.items) {
-        const id = `bought_${g.id}_${lvl.id}_${it.id}`;
-        const entry = features.bought[id] || { checked: !!lvl.defaultChecked, comment: "" };
-        features.bought[id] = entry;
-
-        const row = document.createElement("div");
-        row.className = "feature-item";
-
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = !!entry.checked;
-        cb.addEventListener("change", () => {
-          entry.checked = cb.checked;
-          saveState(state);
-        });
-
-        const label = document.createElement("div");
-        label.className = "feature-label";
-        label.textContent = it.label;
-
-        const comment = document.createElement("input");
-        comment.className = "feature-comment";
-        comment.type = "text";
-        comment.placeholder = "Commentaire…";
-        comment.value = entry.comment || "";
-        comment.addEventListener("input", () => {
-          entry.comment = comment.value;
-          saveState(state);
-        });
-
-        row.appendChild(cb);
-        row.appendChild(label);
-        row.appendChild(comment);
-        lvlWrap.appendChild(row);
-      }
-
-      gWrap.appendChild(lvlWrap);
-    }
-
-    container.appendChild(gWrap);
-  }
 }
 
 function renderPlanning(state) {
@@ -465,17 +317,14 @@ function download(filename, text) {
   URL.revokeObjectURL(url);
 }
 
-function uniqueLots(items) {
-  const lots = new Set(items.map((x) => x.lot));
-  return Array.from(lots).sort((a, b) => a - b);
-}
-
 function uniqueRooms(items) {
   const rooms = new Set(items.map((x) => x.room || "—"));
   return Array.from(rooms).sort((a, b) => a.localeCompare(b, "fr"));
 }
 
 const ROOM_ORDER = [
+  "Communs",
+  "Toiture",
   "Cuisine",
   "Salle de bain",
   "WC",
@@ -636,28 +485,10 @@ function render() {
   const items = window.TRAVAUX_ITEMS || [];
   const state = applyFeatureDefaults(applyItemDefaults(items, loadState()));
 
-  const lotFilter = document.getElementById("lotFilter");
   const roomFilter = document.getElementById("roomFilter");
   const statusFilter = document.getElementById("statusFilter");
   const searchInput = document.getElementById("searchInput");
   const tbody = document.getElementById("itemsTbody");
-
-  // init lot filter once
-  if (!lotFilter.dataset.ready) {
-    lotFilter.innerHTML = "";
-    const allOpt = document.createElement("option");
-    allOpt.value = "ALL";
-    allOpt.textContent = "Tous";
-    lotFilter.appendChild(allOpt);
-
-    for (const lot of uniqueLots(items)) {
-      const opt = document.createElement("option");
-      opt.value = String(lot);
-      opt.textContent = `Lot ${lot}`;
-      lotFilter.appendChild(opt);
-    }
-    lotFilter.dataset.ready = "1";
-  }
 
   // init room filter once
   if (roomFilter && !roomFilter.dataset.ready) {
@@ -675,7 +506,6 @@ function render() {
     roomFilter.dataset.ready = "1";
   }
 
-  const selectedLot = lotFilter.value || "ALL";
   const selectedRoom = (roomFilter && roomFilter.value) ? roomFilter.value : "ALL";
   const selectedStatus = statusFilter.value || "ALL";
   const query = searchInput.value || "";
@@ -685,7 +515,6 @@ function render() {
   // Filter first
   const filtered = [];
   for (const it of items) {
-    if (selectedLot !== "ALL" && String(it.lot) !== selectedLot) continue;
     if (selectedRoom !== "ALL" && String(it.room || "") !== selectedRoom) continue;
     if (!matchesQuery(it, query)) continue;
 
@@ -737,7 +566,7 @@ function render() {
     const trGroup = document.createElement("tr");
     trGroup.className = "group-row";
     const tdGroup = document.createElement("td");
-    tdGroup.colSpan = 10;
+    tdGroup.colSpan = 9;
     const title = document.createElement("div");
     title.className = "group-title";
     title.textContent = `Pièce: ${room}`;
@@ -755,9 +584,6 @@ function render() {
       const actual = clampInt(s.actual_total_cents, it.budget_total_cents);
 
       const tr = document.createElement("tr");
-
-    const tdLot = document.createElement("td");
-    tdLot.textContent = String(it.lot);
 
     const tdArt = document.createElement("td");
     tdArt.textContent = it.article;
@@ -839,7 +665,6 @@ function render() {
     });
     tdComment.appendChild(comment);
 
-    tr.appendChild(tdLot);
     tr.appendChild(tdArt);
     tr.appendChild(tdSpec);
     tr.appendChild(tdQty);
@@ -856,7 +681,6 @@ function render() {
   }
 
   renderTotals(items, state, shown);
-  renderBoughtFeatures(state);
   renderPlanning(state);
   renderTopProgress(items, state);
 }
@@ -953,12 +777,10 @@ function renderTotals(items, state, shownOverride) {
 }
 
 function wireActions() {
-  const lotFilter = document.getElementById("lotFilter");
   const roomFilter = document.getElementById("roomFilter");
   const statusFilter = document.getElementById("statusFilter");
   const searchInput = document.getElementById("searchInput");
 
-  lotFilter.addEventListener("change", render);
   if (roomFilter) roomFilter.addEventListener("change", render);
   statusFilter.addEventListener("change", render);
   searchInput.addEventListener("input", () => {
@@ -967,74 +789,6 @@ function wireActions() {
     searchInput._t = window.setTimeout(render, 80);
   });
 
-  // Quick filter buttons
-  const toggleTodoBtn = document.getElementById("toggleTodoBtn");
-  const toggleBoughtBtn = document.getElementById("toggleBoughtBtn");
-  const resetFiltersBtn = document.getElementById("resetFiltersBtn");
-  if (toggleTodoBtn) {
-    toggleTodoBtn.classList.add("btn-toggle");
-    toggleTodoBtn.addEventListener("click", () => {
-      statusFilter.value = "todo";
-      render();
-    });
-  }
-  if (toggleBoughtBtn) {
-    toggleBoughtBtn.classList.add("btn-toggle");
-    toggleBoughtBtn.addEventListener("click", () => {
-      statusFilter.value = "bought";
-      render();
-    });
-  }
-  if (resetFiltersBtn) {
-    resetFiltersBtn.addEventListener("click", () => {
-      lotFilter.value = "ALL";
-      if (roomFilter) roomFilter.value = "ALL";
-      statusFilter.value = "ALL";
-      searchInput.value = "";
-      render();
-    });
-  }
-
-  document.getElementById("exportBtn").addEventListener("click", () => {
-    const state = loadState();
-    const filename = `travaux63b_commentaires_${new Date().toISOString().slice(0, 10)}.json`;
-    download(filename, JSON.stringify(state, null, 2));
-  });
-
-  document.getElementById("importInput").addEventListener("change", async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const text = await file.text();
-    try {
-      const parsed = JSON.parse(text);
-      if (!parsed || typeof parsed !== "object") throw new Error("Bad JSON");
-      saveState(parsed);
-      render();
-    } catch (err) {
-      alert("Fichier invalide. Attendu: JSON exporté depuis ce site.");
-    } finally {
-      e.target.value = "";
-    }
-  });
-
-  document.getElementById("shareBtn").addEventListener("click", async () => {
-    const state = loadState();
-    const payload = btoa(JSON.stringify(state));
-    const url = `${window.location.origin}${window.location.pathname}#${SHARE_PREFIX}${encodeURIComponent(payload)}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      alert("Lien copié dans le presse-papiers.");
-    } catch (_) {
-      prompt("Copiez ce lien:", url);
-    }
-  });
-
-  document.getElementById("clearBtn").addEventListener("click", () => {
-    if (!confirm("Réinitialiser commentaires et statuts sur cet appareil ?")) return;
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(VIEW_KEY);
-    render();
-  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {

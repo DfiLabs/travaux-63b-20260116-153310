@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Suivi Travaux 63B</title>
-    <link rel="stylesheet" href="./style.css?v=20260116-6" />
+    <link rel="stylesheet" href="./style.css?v=20260116-7" />
   </head>
   <body>
     <header class="header">
@@ -17,15 +17,6 @@
               Ajuster uniquement si un poste dépasse.
             </p>
           </div>
-          <div class="header-actions">
-            <button id="exportBtn" class="btn">Exporter commentaires</button>
-            <label class="btn btn-secondary file-btn">
-              Importer commentaires
-              <input id="importInput" type="file" accept="application/json" />
-            </label>
-            <button id="shareBtn" class="btn btn-secondary">Générer lien à partager</button>
-            <button id="clearBtn" class="btn btn-danger">Réinitialiser</button>
-          </div>
         </div>
 
         <div class="tabs" role="tablist" aria-label="Navigation">
@@ -34,10 +25,6 @@
         </div>
 
         <div class="controls">
-          <div class="control">
-            <label for="lotFilter">Lot</label>
-            <select id="lotFilter"></select>
-          </div>
           <div class="control">
             <label for="roomFilter">Pièce</label>
             <select id="roomFilter"></select>
@@ -128,18 +115,12 @@
               <div id="materialsProgressFill" class="progress-fill"></div>
             </div>
           </div>
-          <div class="material-quick">
-            <button id="toggleTodoBtn" class="btn btn-secondary" type="button">Voir “À acheter”</button>
-            <button id="toggleBoughtBtn" class="btn btn-secondary" type="button">Voir “Acheté”</button>
-            <button id="resetFiltersBtn" class="btn" type="button">Réinitialiser filtres</button>
-          </div>
         </div>
 
         <div class="table-wrap">
           <table class="table" id="itemsTable">
             <thead>
               <tr>
-                <th>Lot</th>
                 <th>Article</th>
                 <th>Spécification</th>
                 <th class="num">Qté</th>
@@ -153,22 +134,6 @@
             </thead>
             <tbody id="itemsTbody"></tbody>
           </table>
-        </div>
-
-        <footer class="footer">
-          <p>
-            Astuce: les commentaires/états sont sauvegardés automatiquement (dans votre navigateur). Utilisez
-            “Exporter” pour partager un fichier, ou “Générer lien” pour obtenir une URL partageable.
-          </p>
-        </footer>
-
-        <div class="section-card">
-          <h2>2) Ce qui a été acheté (communs + colmatage toiture)</h2>
-          <p class="section-sub">
-            Deux niveaux: <strong>confirmé</strong> (vu explicitement) et <strong>très probable</strong>
-            (car “communs + toiture finis”). Cochez + ajoutez un commentaire si besoin.
-          </p>
-          <div id="boughtFeatures"></div>
         </div>
       </section>
 
@@ -192,8 +157,8 @@
       </section>
     </main>
 
-    <script src="./items.js?v=20260116-6"></script>
-    <script src="./app.js?v=20260116-6"></script>
+    <script src="./items.js?v=20260116-7"></script>
+    <script src="./app.js?v=20260116-7"></script>
   </body>
 </html>
 
