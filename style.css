@@ -433,6 +433,10 @@ h1 {
   font-weight: 650;
   z-index: 3;
 }
+.table thead {
+  position: relative;
+  z-index: 3;
+}
 .table td {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding: 8px 10px;

@@ -96,7 +96,7 @@ function applyAssumedBudgets(items, state) {
   // have an assumed_budget_cents, set the override to the assumed value so it contributes
   // to totals immediately.
   const meta = state.__meta && typeof state.__meta === "object" ? state.__meta : {};
-  const version = 1;
+  const version = 2;
   if (meta.assumedBudgetsVersion === version) return state;
 
   let changed = false;
@@ -115,8 +115,13 @@ function applyAssumedBudgets(items, state) {
       s.status = normalizeStatus(it.default_status);
       changed = true;
     }
-    if (!("actual_total_cents" in s)) {
-      // default actual to the assumed budget for already-bought items
+    const status = normalizeStatus(s.status || it.default_status || "todo");
+    const actualIsMissing = !("actual_total_cents" in s);
+    const actualIsZero = typeof s.actual_total_cents === "number" && s.actual_total_cents === 0;
+    // For assumed already-bought lines: if actual is missing OR stuck at 0 from an old run,
+    // set it to the assumed budget so the top totals match the table.
+    // If the user *really* wants 0, they can edit "Réel (Total)" manually afterwards.
+    if (status === "bought" && (actualIsMissing || actualIsZero)) {
       s.actual_total_cents = s.budget_override_cents;
       changed = true;
     }
