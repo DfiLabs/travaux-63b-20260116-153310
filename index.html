@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Suivi Travaux 63B</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="container">
+        <div class="header-top">
+          <div>
+            <h1>Suivi Travaux 63B</h1>
+            <p class="subtitle">
+              Liste d'achats matériaux (reste à acheter) — prix TTC, budget fixe (économies).
+              Ajuster uniquement si un poste dépasse.
+            </p>
+          </div>
+          <div class="header-actions">
+            <button id="exportBtn" class="btn">Exporter commentaires</button>
+            <label class="btn btn-secondary file-btn">
+              Importer commentaires
+              <input id="importInput" type="file" accept="application/json" />
+            </label>
+            <button id="shareBtn" class="btn btn-secondary">Générer lien à partager</button>
+            <button id="clearBtn" class="btn btn-danger">Réinitialiser</button>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control">
+            <label for="lotFilter">Lot</label>
+            <select id="lotFilter"></select>
+          </div>
+          <div class="control">
+            <label for="searchInput">Recherche</label>
+            <input id="searchInput" type="search" placeholder="Article, spécification…" />
+          </div>
+          <div class="control">
+            <label for="statusFilter">Statut</label>
+            <select id="statusFilter">
+              <option value="ALL">Tous</option>
+              <option value="todo">À acheter</option>
+              <option value="ordered">Commandé</option>
+              <option value="bought">Acheté</option>
+              <option value="done">Fait / OK</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="card">
+            <div class="card-title">Budget (fixe)</div>
+            <div id="budgetTotal" class="card-value">—</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Réel (avec ajustements)</div>
+            <div id="actualTotal" class="card-value">—</div>
+            <div id="deltaTotal" class="card-sub">—</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Lignes</div>
+            <div id="lineCount" class="card-value">—</div>
+            <div id="lineCount2" class="card-sub">—</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="table-wrap">
+        <table class="table" id="itemsTable">
+          <thead>
+            <tr>
+              <th>Lot</th>
+              <th>Article</th>
+              <th>Spécification</th>
+              <th class="num">Qté</th>
+              <th>Unité</th>
+              <th class="num">PU</th>
+              <th class="num">Budget (Total)</th>
+              <th class="num">Réel (Total)</th>
+              <th>Statut</th>
+              <th>Commentaire artisan</th>
+            </tr>
+          </thead>
+          <tbody id="itemsTbody"></tbody>
+        </table>
+      </div>
+
+      <footer class="footer">
+        <p>
+          Astuce: les commentaires/états sont sauvegardés automatiquement (dans votre navigateur). Utilisez
+          “Exporter” pour partager un fichier, ou “Générer lien” pour obtenir une URL partageable.
+        </p>
+      </footer>
+    </main>
+
+    <script src="./items.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
+
