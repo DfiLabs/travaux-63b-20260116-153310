@@ -91,6 +91,42 @@ function applyItemDefaults(items, state) {
   return state;
 }
 
+function applyAssumedBudgets(items, state) {
+  // One-time migration: if previous overrides were 0 (because unknown) and we now
+  // have an assumed_budget_cents, set the override to the assumed value so it contributes
+  // to totals immediately.
+  const meta = state.__meta && typeof state.__meta === "object" ? state.__meta : {};
+  const version = 1;
+  if (meta.assumedBudgetsVersion === version) return state;
+
+  let changed = false;
+  for (const it of items) {
+    if (typeof it.assumed_budget_cents !== "number") continue;
+    if (!state[it.id] || typeof state[it.id] !== "object") state[it.id] = {};
+    const s = state[it.id];
+
+    const hasOverride = typeof s.budget_override_cents === "number";
+    const overrideIsZero = hasOverride && s.budget_override_cents === 0;
+    if (!hasOverride || overrideIsZero) {
+      s.budget_override_cents = it.assumed_budget_cents;
+      changed = true;
+    }
+    if (!("status" in s) && it.default_status) {
+      s.status = normalizeStatus(it.default_status);
+      changed = true;
+    }
+    if (!("actual_total_cents" in s)) {
+      // default actual to the assumed budget for already-bought items
+      s.actual_total_cents = s.budget_override_cents;
+      changed = true;
+    }
+  }
+
+  state.__meta = { ...meta, assumedBudgetsVersion: version };
+  if (changed) saveState(state);
+  return state;
+}
+
 const PLANNING_WEEKS = [
   { id: "S1", range: "15–26 jan", tasks: ["Dépose/déblai appart + traçage complet", "Ouverture séjour ↔ chambre 1 (+ reprises immédiates)", "Commandes “long lead” : volets, clim, Velux, escalier"] },
   { id: "S2", range: "27 jan–9 fév", tasks: ["Élec 1ère passe (saignées/boîtes/gaines/tirages principaux)", "Plomberie 1ère passe (cuisine + SDB + préparation WC)"] },
@@ -399,8 +435,7 @@ function makeStatusPill(status) {
   return wrap;
 }
 
-function computeBudgetTotal(items) {
-  const state = loadState();
+function computeBudgetTotal(items, state) {
   return items.reduce((acc, it) => acc + getBudgetCents(it, state), 0);
 }
 
@@ -498,7 +533,7 @@ function drawDonut(canvas, bought, remaining) {
 
 function render() {
   const items = window.TRAVAUX_ITEMS || [];
-  const state = applyFeatureDefaults(applyItemDefaults(items, loadState()));
+  const state = applyFeatureDefaults(applyAssumedBudgets(items, applyItemDefaults(items, loadState())));
 
   const roomFilter = document.getElementById("roomFilter");
   const statusFilter = document.getElementById("statusFilter");
@@ -741,7 +776,7 @@ function render() {
 }
 
 function renderTotals(items, state, shownOverride) {
-  const budget = computeBudgetTotal(items);
+  const budget = computeBudgetTotal(items, state);
   const actual = computeActualTotal(items, state);
   const delta = actual - budget;
 
