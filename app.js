@@ -49,14 +49,15 @@ function loadState() {
 
 function applyItemDefaults(items, state) {
   // Apply defaults only when the user has no existing value for that field.
-  // Stored once, so sharing/export includes them too.
-  const meta = state.__meta && typeof state.__meta === "object" ? state.__meta : {};
-  const version = 2;
-  if (meta.defaultsAppliedVersion === version) return state;
-
+  // IMPORTANT: this runs every time, but only writes to storage if something changed.
+  // This way, newly-added items (like Communs/Toiture) get defaults automatically
+  // without requiring a reset.
   let changed = false;
   for (const it of items) {
-    if (!state[it.id]) state[it.id] = {};
+    if (!state[it.id]) {
+      state[it.id] = {};
+      changed = true;
+    }
     const s = state[it.id];
     if (s && typeof s === "object") {
       if (!("status" in s) && it.default_status) {
@@ -74,7 +75,6 @@ function applyItemDefaults(items, state) {
     }
   }
 
-  state.__meta = { ...meta, defaultsAppliedVersion: version };
   if (changed) saveState(state);
   return state;
 }
