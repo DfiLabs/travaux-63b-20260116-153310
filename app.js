@@ -68,17 +68,22 @@ function matchesQuery(item, q) {
 
 function statusLabel(s) {
   switch (s) {
-    case "todo":
-      return "À acheter";
-    case "ordered":
-      return "Commandé";
     case "bought":
       return "Acheté";
-    case "done":
-      return "Fait / OK";
+    case "todo":
     default:
       return "À acheter";
   }
+}
+
+function normalizeStatus(s) {
+  // Backward compatibility with earlier versions:
+  // - done => bought
+  // - ordered => todo
+  if (s === "done") return "bought";
+  if (s === "ordered") return "todo";
+  if (s === "bought") return "bought";
+  return "todo";
 }
 
 function makeStatusPill(status) {
@@ -115,10 +120,10 @@ function computeBoughtVsRemaining(items, state) {
 
   for (const it of items) {
     const s = (state[it.id] || {});
-    const status = s.status || "todo";
+    const status = normalizeStatus(s.status || "todo");
     const val = clampInt(s.actual_total_cents, it.budget_total_cents);
 
-    if (status === "bought" || status === "done") {
+    if (status === "bought") {
       boughtCents += val;
       boughtCount += 1;
     } else {
@@ -228,7 +233,7 @@ function render() {
     if (!matchesQuery(it, query)) continue;
 
     const s = state[it.id] || {};
-    const status = s.status || "todo";
+    const status = normalizeStatus(s.status || "todo");
     if (selectedStatus !== "ALL" && status !== selectedStatus) continue;
 
     const actual = clampInt(s.actual_total_cents, it.budget_total_cents);
@@ -281,7 +286,7 @@ function render() {
     const tdStatus = document.createElement("td");
     const statusSel = document.createElement("select");
     statusSel.className = "status-select";
-    for (const optVal of ["todo", "ordered", "bought", "done"]) {
+    for (const optVal of ["todo", "bought"]) {
       const opt = document.createElement("option");
       opt.value = optVal;
       opt.textContent = statusLabel(optVal);
@@ -290,7 +295,7 @@ function render() {
     statusSel.value = status;
     statusSel.addEventListener("change", () => {
       if (!state[it.id]) state[it.id] = {};
-      state[it.id].status = statusSel.value;
+      state[it.id].status = normalizeStatus(statusSel.value);
       saveState(state);
       renderTotals(items, state);
       render();
