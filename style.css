@@ -66,6 +66,27 @@ h1 {
   justify-content: flex-end;
 }
 
+.tabs {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tab {
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.22);
+  color: var(--text);
+  padding: 9px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+.tab.active {
+  background: rgba(122,162,255,0.18);
+  border-color: rgba(122,162,255,0.45);
+}
+
 .btn {
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.06);
@@ -206,6 +227,108 @@ h1 {
   overflow: hidden;
   background: rgba(0,0,0,0.18);
 }
+
+.view { display: none; }
+.view.active { display: block; }
+
+.section-card {
+  margin: 18px 0 24px;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.18);
+  border-radius: 16px;
+  padding: 16px 16px;
+}
+.section-card h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.section-sub {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.feature-group {
+  margin-top: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.feature-group-header {
+  padding: 10px 12px;
+  background: rgba(122,162,255,0.10);
+  font-weight: 750;
+}
+.feature-level {
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.feature-level-title {
+  color: rgba(183,196,230,0.95);
+  font-size: 12px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+.feature-item {
+  display: grid;
+  grid-template-columns: 18px 1fr 280px;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+}
+@media (max-width: 900px) {
+  .feature-item { grid-template-columns: 18px 1fr; }
+}
+.feature-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+.feature-label { font-size: 13px; }
+.feature-comment {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.25);
+  color: var(--text);
+  padding: 8px 9px;
+  outline: none;
+}
+
+.planning-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 900px) {
+  .planning-grid { grid-template-columns: 1fr; }
+}
+.week-card {
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.18);
+  padding: 12px 12px;
+}
+.week-title {
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.week-sub {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.task {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 6px 0;
+}
+.task input[type="checkbox"] { width: 16px; height: 16px; margin-top: 2px; }
+.task-label { font-size: 13px; }
 
 .table {
   width: 100%;

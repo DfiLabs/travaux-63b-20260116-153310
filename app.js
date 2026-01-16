@@ -2,6 +2,7 @@
 
 const STORAGE_KEY = "travaux63b_comments_v1";
 const SHARE_PREFIX = "data=";
+const VIEW_KEY = "travaux63b_view_v1";
 
 function eur(cents) {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format((cents || 0) / 100);
@@ -67,7 +68,7 @@ function applyItemDefaults(items, state) {
   // Apply defaults only when the user has no existing value for that field.
   // Stored once, so sharing/export includes them too.
   const meta = state.__meta && typeof state.__meta === "object" ? state.__meta : {};
-  const version = 1;
+  const version = 2;
   if (meta.defaultsAppliedVersion === version) return state;
 
   let changed = false;
@@ -93,6 +94,251 @@ function applyItemDefaults(items, state) {
   state.__meta = { ...meta, defaultsAppliedVersion: version };
   if (changed) saveState(state);
   return state;
+}
+
+const BOUGHT_GROUPS = [
+  {
+    id: "communs",
+    title: "Parties communes — déjà acheté",
+    levels: [
+      {
+        id: "confirmed",
+        title: "✅ Confirmé",
+        defaultChecked: true,
+        items: [
+          { id: "spots", label: "4 × spots détecteur" },
+          { id: "cable", label: "câble (alimentation)" },
+          { id: "cavaliers", label: "cavaliers" },
+          { id: "disjoncteur", label: "disjoncteur" },
+          { id: "boitier-derivation", label: "boîtier + boîte de dérivation" },
+          { id: "enduit", label: "enduit (au moins rebouchage / lissage mentionné)" },
+          { id: "protections-dechets", label: "protections + consommables + évacuation déchets (sacs/gravats)" },
+        ],
+      },
+      {
+        id: "probable",
+        title: "☑️ Très probable (car communs terminés)",
+        defaultChecked: false,
+        items: [
+          { id: "peinture", label: "Peinture : fixateur/sous-couche, murs, plafonds (+ anti-humidité localement)" },
+          { id: "mur", label: "Mur : toile de verre + colle, bandes/angles si reprises" },
+          { id: "sol", label: "Sol : carrelage, colle carrelage, joints, primaire, croisillons/cales" },
+          { id: "finitions-sol", label: "Finitions sol : ragréage/autonivelant (si besoin), profilés/seuils/nez de marche, silicone" },
+          { id: "fenetres", label: "Fenêtres communs : polycarbonate/plexi ou vitrage + mastic/joints/parecloses + quincaillerie" },
+          { id: "porte-acces", label: "Porte immeuble / accès : serrure + cylindre, gâche, digicode/clavier, alim + câble + goulotte, renforts/paumelles" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "toiture",
+    title: "Colmatage toiture / cheminée — déjà acheté",
+    levels: [
+      {
+        id: "probable",
+        title: "☑️ Très probable (car toiture “finie”)",
+        defaultChecked: false,
+        items: [
+          { id: "bandes", label: "bandes / membranes d’étanchéité (points singuliers)" },
+          { id: "resine", label: "résine / peinture d’étanchéité / hydrofuge" },
+          { id: "mastics", label: "mastic-colle toiture, silicone, mousse expansive" },
+          { id: "petites-reprises", label: "petites reprises : visserie, éventuellement tuiles / liteaux" },
+          { id: "cheminee", label: "cheminée : reprise solin/bavette + étanchéité périphérique" },
+        ],
+      },
+    ],
+  },
+];
+
+const PLANNING_WEEKS = [
+  { id: "S1", range: "15–26 jan", tasks: ["Dépose/déblai appart + traçage complet", "Ouverture séjour ↔ chambre 1 (+ reprises immédiates)", "Commandes “long lead” : volets, clim, Velux, escalier"] },
+  { id: "S2", range: "27 jan–9 fév", tasks: ["Élec 1ère passe (saignées/boîtes/gaines/tirages principaux)", "Plomberie 1ère passe (cuisine + SDB + préparation WC)"] },
+  { id: "S3", range: "10–23 fév", tasks: ["WC sanibroyeur : arrivée eau + élec + refoulement + coffrage technique", "Début SDB : receveur/évacs + SPEC (1ère couche) + bandes d’angles"] },
+  { id: "S4", range: "24 fév–9 mars", tasks: ["SDB : carrelage/faïence + joints + silicones", "Pose vasque/robinets + paroi + finitions plomberie"] },
+  { id: "S5", range: "10–23 mars", tasks: ["Cuisine : meubles + plan + évier/mitigeur + raccordements + crédence", "Élec cuisine : circuits/prises dédiées (2e passe partielle)"] },
+  { id: "S6", range: "24 mars–6 avr", tasks: ["Trémie + escalier : renforts + pose escalier + garde-corps (structure)", "Démarrage combles : débarras + plancher OSB/renforts"] },
+  { id: "S7", range: "7–20 avr", tasks: ["Combles : isolation + pare-vapeur + ossature + pose Velux (météo OK)", "Combles : élec (prises/lumière)"] },
+  { id: "S8", range: "21 avr–4 mai", tasks: ["Combles : placo + bandes/enduits (1ère passe)", "Appart : préparation sols (ragréage local si besoin)"] },
+  { id: "S9", range: "5–18 mai", tasks: ["Sols : pose LVT/SPC + sous-couche + plinthes + seuils", "Peinture : enduits ponctuels + impression"] },
+  { id: "S10", range: "19 mai–1 juin", tasks: ["Peinture : 2 couches + finitions", "Volets électriques : pose + raccord + réglages"] },
+  { id: "S11", range: "2–15 juin", tasks: ["Clim bi-split : supports + liaisons + goulottes + condensats + mise en service", "Élec 2e passe : appareillage, luminaires, tests"] },
+  { id: "S12", range: "16–30 juin", tasks: ["Réserves : retouches peinture, silicones, réglages portes/volets", "Nettoyage fin + livraison"] },
+];
+
+function getFeaturesState(state) {
+  if (!state.__features || typeof state.__features !== "object") state.__features = {};
+  if (!state.__features.bought || typeof state.__features.bought !== "object") state.__features.bought = {};
+  if (!state.__features.planning || typeof state.__features.planning !== "object") state.__features.planning = {};
+  return state.__features;
+}
+
+function applyFeatureDefaults(state) {
+  const meta = state.__meta && typeof state.__meta === "object" ? state.__meta : {};
+  const version = 1;
+  if (meta.featuresAppliedVersion === version) return state;
+
+  const features = getFeaturesState(state);
+  // bought items defaults
+  for (const g of BOUGHT_GROUPS) {
+    for (const lvl of g.levels) {
+      for (const it of lvl.items) {
+        const id = `bought_${g.id}_${lvl.id}_${it.id}`;
+        if (!features.bought[id]) features.bought[id] = { checked: !!lvl.defaultChecked, comment: "" };
+      }
+    }
+  }
+  // planning task defaults
+  for (const w of PLANNING_WEEKS) {
+    for (let i = 0; i < w.tasks.length; i += 1) {
+      const id = `plan_${w.id}_${i}`;
+      if (!features.planning[id]) features.planning[id] = { done: false };
+    }
+  }
+
+  state.__meta = { ...meta, featuresAppliedVersion: version };
+  saveState(state);
+  return state;
+}
+
+function setView(view) {
+  document.querySelectorAll(".view").forEach((el) => {
+    el.classList.toggle("active", el.id === `view-${view}`);
+  });
+  document.querySelectorAll(".tab").forEach((el) => {
+    el.classList.toggle("active", el.dataset.view === view);
+  });
+  localStorage.setItem(VIEW_KEY, view);
+  setStickyHeaderOffset();
+}
+
+function wireViews() {
+  document.querySelectorAll(".tab").forEach((btn) => {
+    btn.addEventListener("click", () => setView(btn.dataset.view));
+  });
+  const saved = localStorage.getItem(VIEW_KEY);
+  setView(saved || "achats");
+}
+
+function renderBoughtFeatures(state) {
+  const container = document.getElementById("boughtFeatures");
+  if (!container) return;
+  const features = getFeaturesState(state);
+  container.innerHTML = "";
+
+  for (const g of BOUGHT_GROUPS) {
+    const gWrap = document.createElement("div");
+    gWrap.className = "feature-group";
+
+    const gHead = document.createElement("div");
+    gHead.className = "feature-group-header";
+    gHead.textContent = g.title;
+    gWrap.appendChild(gHead);
+
+    for (const lvl of g.levels) {
+      const lvlWrap = document.createElement("div");
+      lvlWrap.className = "feature-level";
+
+      const lvlTitle = document.createElement("div");
+      lvlTitle.className = "feature-level-title";
+      lvlTitle.textContent = lvl.title;
+      lvlWrap.appendChild(lvlTitle);
+
+      for (const it of lvl.items) {
+        const id = `bought_${g.id}_${lvl.id}_${it.id}`;
+        const entry = features.bought[id] || { checked: !!lvl.defaultChecked, comment: "" };
+        features.bought[id] = entry;
+
+        const row = document.createElement("div");
+        row.className = "feature-item";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!entry.checked;
+        cb.addEventListener("change", () => {
+          entry.checked = cb.checked;
+          saveState(state);
+        });
+
+        const label = document.createElement("div");
+        label.className = "feature-label";
+        label.textContent = it.label;
+
+        const comment = document.createElement("input");
+        comment.className = "feature-comment";
+        comment.type = "text";
+        comment.placeholder = "Commentaire…";
+        comment.value = entry.comment || "";
+        comment.addEventListener("input", () => {
+          entry.comment = comment.value;
+          saveState(state);
+        });
+
+        row.appendChild(cb);
+        row.appendChild(label);
+        row.appendChild(comment);
+        lvlWrap.appendChild(row);
+      }
+
+      gWrap.appendChild(lvlWrap);
+    }
+
+    container.appendChild(gWrap);
+  }
+}
+
+function renderPlanning(state) {
+  const container = document.getElementById("planning");
+  if (!container) return;
+  const features = getFeaturesState(state);
+  container.innerHTML = "";
+
+  const grid = document.createElement("div");
+  grid.className = "planning-grid";
+
+  for (const w of PLANNING_WEEKS) {
+    const card = document.createElement("div");
+    card.className = "week-card";
+
+    const title = document.createElement("div");
+    title.className = "week-title";
+    title.textContent = `${w.id} (${w.range})`;
+
+    const sub = document.createElement("div");
+    sub.className = "week-sub";
+    sub.textContent = `${w.tasks.length} tâche(s)`;
+
+    card.appendChild(title);
+    card.appendChild(sub);
+
+    w.tasks.forEach((t, idx) => {
+      const id = `plan_${w.id}_${idx}`;
+      const entry = features.planning[id] || { done: false };
+      features.planning[id] = entry;
+
+      const row = document.createElement("div");
+      row.className = "task";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !!entry.done;
+      cb.addEventListener("change", () => {
+        entry.done = cb.checked;
+        saveState(state);
+      });
+
+      const label = document.createElement("div");
+      label.className = "task-label";
+      label.textContent = t;
+
+      row.appendChild(cb);
+      row.appendChild(label);
+      card.appendChild(row);
+    });
+
+    grid.appendChild(card);
+  }
+
+  container.appendChild(grid);
 }
 
 function saveState(state) {
@@ -280,7 +526,7 @@ function drawDonut(canvas, bought, remaining) {
 
 function render() {
   const items = window.TRAVAUX_ITEMS || [];
-  const state = applyItemDefaults(items, loadState());
+  const state = applyFeatureDefaults(applyItemDefaults(items, loadState()));
 
   const lotFilter = document.getElementById("lotFilter");
   const roomFilter = document.getElementById("roomFilter");
@@ -502,6 +748,8 @@ function render() {
   }
 
   renderTotals(items, state, shown);
+  renderBoughtFeatures(state);
+  renderPlanning(state);
 }
 
 function renderTotals(items, state, shownOverride) {
@@ -647,6 +895,7 @@ function wireActions() {
   document.getElementById("clearBtn").addEventListener("click", () => {
     if (!confirm("Réinitialiser commentaires et statuts sur cet appareil ?")) return;
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(VIEW_KEY);
     render();
   });
 }
@@ -657,6 +906,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.clearTimeout(window.__stickyT);
     window.__stickyT = window.setTimeout(setStickyHeaderOffset, 80);
   });
+  wireViews();
   wireActions();
   render();
 });

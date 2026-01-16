@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Suivi Travaux 63B</title>
-    <link rel="stylesheet" href="./style.css?v=20260116-4" />
+    <link rel="stylesheet" href="./style.css?v=20260116-5" />
   </head>
   <body>
     <header class="header">
@@ -26,6 +26,12 @@
             <button id="shareBtn" class="btn btn-secondary">Générer lien à partager</button>
             <button id="clearBtn" class="btn btn-danger">Réinitialiser</button>
           </div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Navigation">
+          <button class="tab active" type="button" data-view="achats">Achats (appartement)</button>
+          <button class="tab" type="button" data-view="bought">2) Déjà acheté (communs + toiture)</button>
+          <button class="tab" type="button" data-view="planning">Planning</button>
         </div>
 
         <div class="controls">
@@ -112,36 +118,59 @@
     </header>
 
     <main class="container">
-      <div class="table-wrap">
-        <table class="table" id="itemsTable">
-          <thead>
-            <tr>
-              <th>Lot</th>
-              <th>Article</th>
-              <th>Spécification</th>
-              <th class="num">Qté</th>
-              <th>Unité</th>
-              <th class="num">PU</th>
-              <th class="num">Budget (Total)</th>
-              <th class="num">Réel (Total)</th>
-              <th>Statut</th>
-              <th>Commentaire artisan</th>
-            </tr>
-          </thead>
-          <tbody id="itemsTbody"></tbody>
-        </table>
-      </div>
+      <section id="view-achats" class="view active">
+        <div class="table-wrap">
+          <table class="table" id="itemsTable">
+            <thead>
+              <tr>
+                <th>Lot</th>
+                <th>Article</th>
+                <th>Spécification</th>
+                <th class="num">Qté</th>
+                <th>Unité</th>
+                <th class="num">PU</th>
+                <th class="num">Budget (Total)</th>
+                <th class="num">Réel (Total)</th>
+                <th>Statut</th>
+                <th>Commentaire artisan</th>
+              </tr>
+            </thead>
+            <tbody id="itemsTbody"></tbody>
+          </table>
+        </div>
 
-      <footer class="footer">
-        <p>
-          Astuce: les commentaires/états sont sauvegardés automatiquement (dans votre navigateur). Utilisez
-          “Exporter” pour partager un fichier, ou “Générer lien” pour obtenir une URL partageable.
-        </p>
-      </footer>
+        <footer class="footer">
+          <p>
+            Astuce: les commentaires/états sont sauvegardés automatiquement (dans votre navigateur). Utilisez
+            “Exporter” pour partager un fichier, ou “Générer lien” pour obtenir une URL partageable.
+          </p>
+        </footer>
+      </section>
+
+      <section id="view-bought" class="view">
+        <div class="section-card">
+          <h2>2) Ce qui a été acheté (communs + colmatage toiture)</h2>
+          <p class="section-sub">
+            Deux niveaux: <strong>confirmé</strong> (vu explicitement) et <strong>très probable</strong>
+            (car “communs + toiture finis”). Vous pouvez cocher “confirmé” et ajouter un commentaire.
+          </p>
+          <div id="boughtFeatures"></div>
+        </div>
+      </section>
+
+      <section id="view-planning" class="view">
+        <div class="section-card">
+          <h2>Planning (15 janvier → fin juin, 2 mecs)</h2>
+          <p class="section-sub">
+            Hypothèses: pas de gros imprévu structurel, matos dispo, interventions externes (clim) calées.
+          </p>
+          <div id="planning"></div>
+        </div>
+      </section>
     </main>
 
-    <script src="./items.js?v=20260116-4"></script>
-    <script src="./app.js?v=20260116-4"></script>
+    <script src="./items.js?v=20260116-5"></script>
+    <script src="./app.js?v=20260116-5"></script>
   </body>
 </html>
 
