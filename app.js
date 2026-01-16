@@ -7,9 +7,33 @@ function eur(cents) {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format((cents || 0) / 100);
 }
 
+function eurInput(cents) {
+  return new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((cents || 0) / 100);
+}
+
 function clampInt(n, fallback = 0) {
   const x = Number.parseInt(String(n), 10);
   return Number.isFinite(x) ? x : fallback;
+}
+
+function parseEuroToCents(text, fallbackCents) {
+  if (text == null) return fallbackCents;
+  const raw = String(text)
+    .trim()
+    .replace(/[€]/g, "")
+    .replace(/\s+/g, "")
+    .replace(",", ".");
+  if (!raw) return fallbackCents;
+  const num = Number.parseFloat(raw);
+  if (!Number.isFinite(num)) return fallbackCents;
+  return Math.round(num * 100);
+}
+
+function setStickyHeaderOffset() {
+  const header = document.querySelector(".header");
+  if (!header) return;
+  const h = Math.ceil(header.getBoundingClientRect().height);
+  document.documentElement.style.setProperty("--sticky-header-offset", `${h}px`);
 }
 
 function loadState() {
@@ -269,17 +293,17 @@ function render() {
     const actualInput = document.createElement("input");
     actualInput.className = "actual-input";
     actualInput.type = "text";
-    actualInput.inputMode = "numeric";
-    actualInput.value = String(actual);
+    actualInput.inputMode = "decimal";
+    actualInput.value = eurInput(actual);
     if (actual > it.budget_total_cents) actualInput.classList.add("exceed");
-    actualInput.title = "Entrez un total réel en CENTIMES (ex: 20000 = 200,00 €).";
-    actualInput.addEventListener("change", () => {
-      const v = clampInt(actualInput.value, it.budget_total_cents);
+    actualInput.title = "Entrez un total réel en € (ex: 200 ou 200,50).";
+    actualInput.addEventListener("blur", () => {
+      const v = parseEuroToCents(actualInput.value, it.budget_total_cents);
       if (!state[it.id]) state[it.id] = {};
       state[it.id].actual_total_cents = v;
       saveState(state);
       renderTotals(items, state);
-      render(); // re-render to update exceed styling
+      render(); // re-render to update formatting + exceed styling
     });
     tdActual.appendChild(actualInput);
 
@@ -423,6 +447,11 @@ function wireActions() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  setStickyHeaderOffset();
+  window.addEventListener("resize", () => {
+    window.clearTimeout(window.__stickyT);
+    window.__stickyT = window.setTimeout(setStickyHeaderOffset, 80);
+  });
   wireActions();
   render();
 });

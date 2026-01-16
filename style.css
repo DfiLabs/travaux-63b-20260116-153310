@@ -9,6 +9,7 @@
   --danger: #ff5f6d;
   --ok: #30d158;
   --warn: #ffcc00;
+  --sticky-header-offset: 0px;
 }
 
 * { box-sizing: border-box; }
@@ -213,16 +214,14 @@ h1 {
 }
 .table thead th {
   position: sticky;
-  top: 210px; /* approximate header height; ok enough */
+  top: var(--sticky-header-offset);
   background: rgba(15, 27, 51, 0.92);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
   padding: 10px 10px;
   text-align: left;
   font-weight: 650;
-}
-@media (max-width: 900px) {
-  .table thead th { top: 380px; }
+  z-index: 3;
 }
 .table td {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
