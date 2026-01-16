@@ -129,11 +129,12 @@ function setView(view) {
   });
   localStorage.setItem(VIEW_KEY, v);
 
-  // Hide material filters + summary when in planning (less clutter)
+  // Hide material filters + summary when not in materials (keep it simple)
   const controls = document.querySelector(".controls");
   const summary = document.querySelector(".summary");
-  if (controls) controls.classList.toggle("hidden", v === "planning");
-  if (summary) summary.classList.toggle("hidden", v === "planning");
+  const hide = v !== "materials";
+  if (controls) controls.classList.toggle("hidden", hide);
+  if (summary) summary.classList.toggle("hidden", hide);
 
   setStickyHeaderOffset();
 }

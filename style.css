@@ -281,6 +281,14 @@ h1 {
   overflow: hidden;
   background: rgba(0,0,0,0.18);
 }
+.table-wrap-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.table-wrap-scroll table {
+  min-width: 720px;
+}
 
 .view { display: none; }
 .view.active { display: block; }
@@ -412,6 +420,7 @@ h1 {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  min-width: 980px;
 }
 .table thead th {
   position: sticky;
@@ -516,6 +525,16 @@ h1 {
   color: var(--muted);
   font-size: 12px;
   padding: 8px 0 24px;
+}
+
+@media (max-width: 720px) {
+  .container { width: calc(100% - 20px); }
+  .table-wrap { border-radius: 14px; }
+  .table thead th { padding: 9px 8px; font-size: 12px; }
+  .table td { padding: 8px 8px; }
+  .comment { min-width: 180px; }
+  .actual-input { width: 100px; }
+  .header-top { gap: 10px; }
 }
 
 .room-table {

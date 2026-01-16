@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Suivi Travaux 63B</title>
-    <link rel="stylesheet" href="./style.css?v=20260116-8" />
+    <link rel="stylesheet" href="./style.css?v=20260116-9" />
   </head>
   <body>
     <header class="header">
@@ -21,6 +21,7 @@
 
         <div class="tabs" role="tablist" aria-label="Navigation">
           <button class="tab active" type="button" data-view="materials">Matériaux</button>
+          <button class="tab" type="button" data-view="budget">Budget</button>
           <button class="tab" type="button" data-view="planning">Planning</button>
         </div>
 
@@ -83,22 +84,6 @@
               </div>
             </div>
           </div>
-          <div class="card card-wide">
-            <div class="card-title">Budget par pièce (synthèse)</div>
-            <table class="room-table" aria-label="Budget par pièce">
-              <thead>
-                <tr>
-                  <th>Pièce</th>
-                  <th class="num">Budget</th>
-                  <th class="num">Réel</th>
-                  <th class="num">Δ</th>
-                  <th class="num">Lignes</th>
-                  <th class="num">Acheté</th>
-                </tr>
-              </thead>
-              <tbody id="roomsTbody"></tbody>
-            </table>
-          </div>
         </div>
       </div>
     </header>
@@ -117,7 +102,7 @@
           </div>
         </div>
 
-        <div class="table-wrap">
+        <div class="table-wrap table-wrap-scroll">
           <table class="table" id="itemsTable">
             <thead>
               <tr>
@@ -134,6 +119,28 @@
             </thead>
             <tbody id="itemsTbody"></tbody>
           </table>
+        </div>
+      </section>
+
+      <section id="view-budget" class="view">
+        <div class="section-card">
+          <h2>Budget par pièce</h2>
+          <p class="section-sub">Synthèse par zone: budget, réel, écart, lignes achetées.</p>
+          <div class="table-wrap table-wrap-scroll">
+            <table class="room-table" aria-label="Budget par pièce">
+              <thead>
+                <tr>
+                  <th>Pièce</th>
+                  <th class="num">Budget</th>
+                  <th class="num">Réel</th>
+                  <th class="num">Δ</th>
+                  <th class="num">Lignes</th>
+                  <th class="num">Acheté</th>
+                </tr>
+              </thead>
+              <tbody id="roomsTbody"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -157,8 +164,8 @@
       </section>
     </main>
 
-    <script src="./items.js?v=20260116-8"></script>
-    <script src="./app.js?v=20260116-8"></script>
+    <script src="./items.js?v=20260116-9"></script>
+    <script src="./app.js?v=20260116-9"></script>
   </body>
 </html>
 
