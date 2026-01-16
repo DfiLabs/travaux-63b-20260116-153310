@@ -86,7 +86,7 @@ h1 {
 .controls {
   margin-top: 14px;
   display: grid;
-  grid-template-columns: 160px 1fr 160px;
+  grid-template-columns: 140px 200px 1fr 160px;
   gap: 12px;
 }
 @media (max-width: 900px) {
@@ -294,4 +294,22 @@ h1 {
   font-size: 12px;
   padding: 8px 0 24px;
 }
+
+.room-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 10px;
+}
+.room-table th, .room-table td {
+  padding: 10px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.room-table th {
+  color: var(--muted);
+  text-align: left;
+  font-weight: 650;
+}
+.room-table .num { text-align: right; }
+.room-row:hover { background: rgba(255,255,255,0.04); }
 

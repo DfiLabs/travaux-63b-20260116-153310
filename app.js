@@ -84,6 +84,11 @@ function uniqueLots(items) {
   return Array.from(lots).sort((a, b) => a - b);
 }
 
+function uniqueRooms(items) {
+  const rooms = new Set(items.map((x) => x.room || "—"));
+  return Array.from(rooms).sort((a, b) => a.localeCompare(b, "fr"));
+}
+
 function matchesQuery(item, q) {
   if (!q) return true;
   const hay = `${item.article} ${item.specification}`.toLowerCase();
@@ -224,6 +229,7 @@ function render() {
   const state = loadState();
 
   const lotFilter = document.getElementById("lotFilter");
+  const roomFilter = document.getElementById("roomFilter");
   const statusFilter = document.getElementById("statusFilter");
   const searchInput = document.getElementById("searchInput");
   const tbody = document.getElementById("itemsTbody");
@@ -245,7 +251,24 @@ function render() {
     lotFilter.dataset.ready = "1";
   }
 
+  // init room filter once
+  if (roomFilter && !roomFilter.dataset.ready) {
+    roomFilter.innerHTML = "";
+    const allOpt = document.createElement("option");
+    allOpt.value = "ALL";
+    allOpt.textContent = "Toutes";
+    roomFilter.appendChild(allOpt);
+    for (const room of uniqueRooms(items)) {
+      const opt = document.createElement("option");
+      opt.value = room;
+      opt.textContent = room;
+      roomFilter.appendChild(opt);
+    }
+    roomFilter.dataset.ready = "1";
+  }
+
   const selectedLot = lotFilter.value || "ALL";
+  const selectedRoom = (roomFilter && roomFilter.value) ? roomFilter.value : "ALL";
   const selectedStatus = statusFilter.value || "ALL";
   const query = searchInput.value || "";
 
@@ -254,6 +277,7 @@ function render() {
   let shown = 0;
   for (const it of items) {
     if (selectedLot !== "ALL" && String(it.lot) !== selectedLot) continue;
+    if (selectedRoom !== "ALL" && String(it.room || "") !== selectedRoom) continue;
     if (!matchesQuery(it, query)) continue;
 
     const s = state[it.id] || {};
@@ -390,14 +414,74 @@ function renderTotals(items, state, shownOverride) {
   if (legendBought) legendBought.textContent = `${eur(boughtCents)} • ${boughtCount} ligne(s)`;
   if (legendRemaining) legendRemaining.textContent = `${eur(remainingCents)} • ${remainingCount} ligne(s)`;
   if (legendFoot) legendFoot.textContent = `Progression: ${pct}% (par nombre de lignes) — basé sur les statuts.`;
+
+  // Budget par pièce
+  const roomsTbody = document.getElementById("roomsTbody");
+  if (roomsTbody) {
+    const agg = new Map(); // room -> {budget, actual, lines, boughtLines}
+    for (const it of items) {
+      const room = it.room || "—";
+      const s = (state[it.id] || {});
+      const status = normalizeStatus(s.status || "todo");
+      const actualLine = clampInt(s.actual_total_cents, it.budget_total_cents);
+      const entry = agg.get(room) || { budget: 0, actual: 0, lines: 0, boughtLines: 0 };
+      entry.budget += (it.budget_total_cents || 0);
+      entry.actual += actualLine;
+      entry.lines += 1;
+      if (status === "bought") entry.boughtLines += 1;
+      agg.set(room, entry);
+    }
+
+    const rows = Array.from(agg.entries()).sort((a, b) => (b[1].budget - a[1].budget));
+    roomsTbody.innerHTML = "";
+    for (const [room, v] of rows) {
+      const tr = document.createElement("tr");
+      tr.className = "room-row";
+
+      const tdRoom = document.createElement("td");
+      tdRoom.textContent = room;
+
+      const tdB = document.createElement("td");
+      tdB.className = "num";
+      tdB.textContent = eur(v.budget);
+
+      const tdA = document.createElement("td");
+      tdA.className = "num";
+      tdA.textContent = eur(v.actual);
+
+      const tdD = document.createElement("td");
+      tdD.className = "num";
+      const deltaRoom = v.actual - v.budget;
+      const signRoom = deltaRoom === 0 ? "" : (deltaRoom > 0 ? "+" : "");
+      tdD.textContent = `${signRoom}${eur(deltaRoom)}`;
+
+      const tdL = document.createElement("td");
+      tdL.className = "num";
+      tdL.textContent = String(v.lines);
+
+      const tdBL = document.createElement("td");
+      tdBL.className = "num";
+      tdBL.textContent = `${v.boughtLines}/${v.lines}`;
+
+      tr.appendChild(tdRoom);
+      tr.appendChild(tdB);
+      tr.appendChild(tdA);
+      tr.appendChild(tdD);
+      tr.appendChild(tdL);
+      tr.appendChild(tdBL);
+      roomsTbody.appendChild(tr);
+    }
+  }
 }
 
 function wireActions() {
   const lotFilter = document.getElementById("lotFilter");
+  const roomFilter = document.getElementById("roomFilter");
   const statusFilter = document.getElementById("statusFilter");
   const searchInput = document.getElementById("searchInput");
 
   lotFilter.addEventListener("change", render);
+  if (roomFilter) roomFilter.addEventListener("change", render);
   statusFilter.addEventListener("change", render);
   searchInput.addEventListener("input", () => {
     // small debounce feel without complexity

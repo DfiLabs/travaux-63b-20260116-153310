@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Suivi Travaux 63B</title>
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./style.css?v=20260116-1" />
   </head>
   <body>
     <header class="header">
@@ -32,6 +32,10 @@
           <div class="control">
             <label for="lotFilter">Lot</label>
             <select id="lotFilter"></select>
+          </div>
+          <div class="control">
+            <label for="roomFilter">Pièce</label>
+            <select id="roomFilter"></select>
           </div>
           <div class="control">
             <label for="searchInput">Recherche</label>
@@ -87,6 +91,22 @@
               </div>
             </div>
           </div>
+          <div class="card card-wide">
+            <div class="card-title">Budget par pièce (synthèse)</div>
+            <table class="room-table" aria-label="Budget par pièce">
+              <thead>
+                <tr>
+                  <th>Pièce</th>
+                  <th class="num">Budget</th>
+                  <th class="num">Réel</th>
+                  <th class="num">Δ</th>
+                  <th class="num">Lignes</th>
+                  <th class="num">Acheté</th>
+                </tr>
+              </thead>
+              <tbody id="roomsTbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </header>
@@ -120,8 +140,8 @@
       </footer>
     </main>
 
-    <script src="./items.js"></script>
-    <script src="./app.js"></script>
+    <script src="./items.js?v=20260116-1"></script>
+    <script src="./app.js?v=20260116-1"></script>
   </body>
 </html>
 
