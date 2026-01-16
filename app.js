@@ -121,6 +121,28 @@ function uniqueRooms(items) {
   return Array.from(rooms).sort((a, b) => a.localeCompare(b, "fr"));
 }
 
+const ROOM_ORDER = [
+  "Cuisine",
+  "Salle de bain",
+  "WC",
+  "Combles",
+  "Escalier / Trémie",
+  "Climatisation",
+  "Volets / Fenêtres",
+  "Sols (toutes pièces)",
+  "Peintures (toutes pièces)",
+  "Général (Électricité)",
+  "Général (Plomberie)",
+  "Général (Placo)",
+  "Général",
+  "Imprévus",
+];
+
+function roomSortKey(room) {
+  const idx = ROOM_ORDER.indexOf(room);
+  return idx === -1 ? 9999 : idx;
+}
+
 function matchesQuery(item, q) {
   if (!q) return true;
   const hay = `${item.article} ${item.specification}`.toLowerCase();
@@ -306,7 +328,8 @@ function render() {
 
   tbody.innerHTML = "";
 
-  let shown = 0;
+  // Filter first
+  const filtered = [];
   for (const it of items) {
     if (selectedLot !== "ALL" && String(it.lot) !== selectedLot) continue;
     if (selectedRoom !== "ALL" && String(it.room || "") !== selectedRoom) continue;
@@ -316,9 +339,68 @@ function render() {
     const status = normalizeStatus(s.status || "todo");
     if (selectedStatus !== "ALL" && status !== selectedStatus) continue;
 
-    const actual = clampInt(s.actual_total_cents, it.budget_total_cents);
+    filtered.push(it);
+  }
 
-    const tr = document.createElement("tr");
+  // Group by room (pièce)
+  const byRoom = new Map(); // room -> items[]
+  for (const it of filtered) {
+    const room = it.room || "—";
+    const arr = byRoom.get(room) || [];
+    arr.push(it);
+    byRoom.set(room, arr);
+  }
+
+  const rooms = Array.from(byRoom.keys()).sort((a, b) => {
+    const ka = roomSortKey(a);
+    const kb = roomSortKey(b);
+    if (ka !== kb) return ka - kb;
+    return a.localeCompare(b, "fr");
+  });
+
+  let shown = 0;
+  for (const room of rooms) {
+    const roomItems = (byRoom.get(room) || []).slice().sort((a, b) => {
+      if (a.lot !== b.lot) return a.lot - b.lot;
+      return String(a.article).localeCompare(String(b.article), "fr");
+    });
+
+    // Room header row
+    let roomBudget = 0;
+    let roomActual = 0;
+    let roomBought = 0;
+    for (const it of roomItems) {
+      const s = state[it.id] || {};
+      const st = normalizeStatus(s.status || "todo");
+      const actual = clampInt(s.actual_total_cents, it.budget_total_cents);
+      roomBudget += (it.budget_total_cents || 0);
+      roomActual += actual;
+      if (st === "bought") roomBought += 1;
+    }
+    const roomDelta = roomActual - roomBudget;
+    const signRoom = roomDelta === 0 ? "" : (roomDelta > 0 ? "+" : "");
+
+    const trGroup = document.createElement("tr");
+    trGroup.className = "group-row";
+    const tdGroup = document.createElement("td");
+    tdGroup.colSpan = 10;
+    const title = document.createElement("div");
+    title.className = "group-title";
+    title.textContent = `Pièce: ${room}`;
+    const meta = document.createElement("div");
+    meta.className = "group-meta";
+    meta.textContent = `Budget ${eur(roomBudget)} • Réel ${eur(roomActual)} • Δ ${signRoom}${eur(roomDelta)} • Acheté ${roomBought}/${roomItems.length}`;
+    tdGroup.appendChild(title);
+    tdGroup.appendChild(meta);
+    trGroup.appendChild(tdGroup);
+    tbody.appendChild(trGroup);
+
+    for (const it of roomItems) {
+      const s = state[it.id] || {};
+      const status = normalizeStatus(s.status || "todo");
+      const actual = clampInt(s.actual_total_cents, it.budget_total_cents);
+
+      const tr = document.createElement("tr");
 
     const tdLot = document.createElement("td");
     tdLot.textContent = String(it.lot);
@@ -416,6 +498,7 @@ function render() {
 
     tbody.appendChild(tr);
     shown += 1;
+  }
   }
 
   renderTotals(items, state, shown);

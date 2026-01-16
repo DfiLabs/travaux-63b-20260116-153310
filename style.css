@@ -239,6 +239,22 @@ h1 {
   font-size: 12px;
 }
 
+.group-row td {
+  padding: 10px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  background: linear-gradient(90deg, rgba(122,162,255,0.14), rgba(48,209,88,0.10));
+}
+.group-title {
+  font-weight: 750;
+  letter-spacing: 0.2px;
+}
+.group-meta {
+  margin-top: 2px;
+  color: rgba(183, 196, 230, 0.92);
+  font-size: 12px;
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
