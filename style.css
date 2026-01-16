@@ -124,6 +124,22 @@ h1 {
   background: rgba(0,0,0,0.20);
   border-radius: 14px;
   padding: 12px 12px;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -60px -40px auto auto;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle at 30% 30%, rgba(122,162,255,0.30), transparent 60%),
+              radial-gradient(circle at 70% 70%, rgba(48,209,88,0.22), transparent 62%);
+  transform: rotate(10deg);
+  pointer-events: none;
+}
+.card-wide {
+  grid-column: 1 / -1;
 }
 .card-title { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
 .card-value { font-size: 18px; font-weight: 700; letter-spacing: 0.2px; }
@@ -131,6 +147,56 @@ h1 {
 .card-sub.positive { color: rgba(48,209,88,0.95); }
 .card-sub.negative { color: rgba(255,95,109,0.95); }
 .card-sub.neutral { color: var(--muted); }
+
+.chart-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.chart-wrap {
+  width: 180px;
+  height: 180px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.22);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+}
+.chart-wrap canvas {
+  width: 160px;
+  height: 160px;
+}
+.chart-legend {
+  flex: 1;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.legend-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.18);
+}
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  display: inline-block;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
+}
+.swatch-bought { background: linear-gradient(180deg, rgba(48,209,88,1), rgba(122,255,199,0.85)); }
+.swatch-remaining { background: linear-gradient(180deg, rgba(122,162,255,1), rgba(255,95,109,0.65)); }
+.legend-title { font-weight: 650; font-size: 13px; }
+.legend-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.legend-foot { color: var(--muted); font-size: 12px; margin-top: 2px; }
 
 .table-wrap {
   margin: 18px 0 24px;

@@ -107,6 +107,89 @@ function computeActualTotal(items, state) {
   return total;
 }
 
+function computeBoughtVsRemaining(items, state) {
+  let boughtCents = 0;
+  let remainingCents = 0;
+  let boughtCount = 0;
+  let remainingCount = 0;
+
+  for (const it of items) {
+    const s = (state[it.id] || {});
+    const status = s.status || "todo";
+    const val = clampInt(s.actual_total_cents, it.budget_total_cents);
+
+    if (status === "bought" || status === "done") {
+      boughtCents += val;
+      boughtCount += 1;
+    } else {
+      remainingCents += val;
+      remainingCount += 1;
+    }
+  }
+
+  return { boughtCents, remainingCents, boughtCount, remainingCount };
+}
+
+function drawDonut(canvas, bought, remaining) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const size = 180;
+  canvas.width = Math.floor(size * dpr);
+  canvas.height = Math.floor(size * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = 72;
+  const w = 18;
+  const total = Math.max(1, bought + remaining);
+
+  // background ring
+  ctx.clearRect(0, 0, size, size);
+  ctx.lineCap = "round";
+  ctx.lineWidth = w;
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const start = -Math.PI / 2;
+  const boughtAngle = (bought / total) * Math.PI * 2;
+
+  // bought gradient
+  const g1 = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+  g1.addColorStop(0, "rgba(48,209,88,1)");
+  g1.addColorStop(1, "rgba(122,255,199,0.85)");
+
+  ctx.strokeStyle = g1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, start, start + boughtAngle);
+  ctx.stroke();
+
+  // remaining gradient
+  const g2 = ctx.createLinearGradient(cx + r, cy - r, cx - r, cy + r);
+  g2.addColorStop(0, "rgba(122,162,255,1)");
+  g2.addColorStop(1, "rgba(255,95,109,0.65)");
+
+  ctx.strokeStyle = g2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, start + boughtAngle, start + Math.PI * 2);
+  ctx.stroke();
+
+  // center text
+  const pct = Math.round((bought / total) * 100);
+  ctx.fillStyle = "rgba(232,238,252,0.95)";
+  ctx.font = "700 28px ui-sans-serif, system-ui, -apple-system";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`${pct}%`, cx, cy - 8);
+  ctx.fillStyle = "rgba(183,196,230,0.9)";
+  ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system";
+  ctx.fillText("acheté", cx, cy + 16);
+}
+
 function render() {
   const items = window.TRAVAUX_ITEMS || [];
   const state = loadState();
@@ -264,6 +347,20 @@ function renderTotals(items, state, shownOverride) {
   const shown = typeof shownOverride === "number" ? shownOverride : items.length;
   document.getElementById("lineCount").textContent = `${shown}`;
   document.getElementById("lineCount2").textContent = `sur ${items.length} lignes`;
+
+  // Pie chart + legend
+  const { boughtCents, remainingCents, boughtCount, remainingCount } = computeBoughtVsRemaining(items, state);
+  const canvas = document.getElementById("buyPie");
+  if (canvas) drawDonut(canvas, boughtCents, remainingCents);
+
+  const totalLines = boughtCount + remainingCount;
+  const pct = totalLines ? Math.round((boughtCount / totalLines) * 100) : 0;
+  const legendBought = document.getElementById("legendBought");
+  const legendRemaining = document.getElementById("legendRemaining");
+  const legendFoot = document.getElementById("legendFoot");
+  if (legendBought) legendBought.textContent = `${eur(boughtCents)} • ${boughtCount} ligne(s)`;
+  if (legendRemaining) legendRemaining.textContent = `${eur(remainingCents)} • ${remainingCount} ligne(s)`;
+  if (legendFoot) legendFoot.textContent = `Progression: ${pct}% (par nombre de lignes) — basé sur les statuts.`;
 }
 
 function wireActions() {
