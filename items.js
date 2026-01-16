@@ -54,7 +54,6 @@ window.TRAVAUX_ITEMS = [
   { id: "sous-couche", lot: 7, room: "Sols (toutes pièces)", article: "Sous-couche", specification: "Sous-couche compatible LVT", qty: 88, unit: "m²", pu_cents: 220, budget_total_cents: 19360, hint: "Vous dites: quantité un peu élevée → à vérifier.", default_comment: "Quantité à vérifier (semble trop élevée)." },
   { id: "plinthes", lot: 7, room: "Sols (toutes pièces)", article: "Plinthes", specification: "Plinthes MDF", qty: 70, unit: "m", pu_cents: 350, budget_total_cents: 24500 },
   { id: "profiles-seuils", lot: 7, room: "Sols (toutes pièces)", article: "Profilés / seuils", specification: "8 pièces", qty: 8, unit: "u", pu_cents: 1500, budget_total_cents: 12000 },
-  { id: "ragreage", lot: 7, room: "Sols (toutes pièces)", article: "Ragréage", specification: "4 sacs", qty: 4, unit: "sac", pu_cents: 2800, budget_total_cents: 11200, hint: "Vous dites: quantité un peu élevée → à vérifier.", default_comment: "Quantité à vérifier (semble trop élevée)." },
   { id: "primaire-5l", lot: 7, room: "Sols (toutes pièces)", article: "Primaire", specification: "5 L", qty: 1, unit: "u", pu_cents: 3000, budget_total_cents: 3000 },
   { id: "carrelage", lot: 7, room: "Salle de bain", article: "Carrelage / faïence", specification: "23 m² (douche + sol SDB) + 10% chutes", qty: 23, unit: "m²", pu_cents: 1600, budget_total_cents: 36800 },
   { id: "colle-carrelage", lot: 7, room: "Salle de bain", article: "Colle carrelage", specification: "5 sacs", qty: 5, unit: "sac", pu_cents: 2000, budget_total_cents: 10000 },
