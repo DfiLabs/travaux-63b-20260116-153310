@@ -322,20 +322,22 @@ function uniqueRooms(items) {
   return Array.from(rooms).sort((a, b) => a.localeCompare(b, "fr"));
 }
 
+// Chronological-ish order (can be tweaked easily):
+// First: already completed areas (Communs, Toiture), then the “logical” flow.
 const ROOM_ORDER = [
   "Communs",
   "Toiture",
-  "Cuisine",
-  "Salle de bain",
-  "WC",
+  "Général (Électricité)",
   "Combles",
+  "Général (Plomberie)",
+  "WC",
+  "Salle de bain",
+  "Cuisine",
   "Escalier / Trémie",
-  "Climatisation",
-  "Volets / Fenêtres",
   "Sols (toutes pièces)",
   "Peintures (toutes pièces)",
-  "Général (Électricité)",
-  "Général (Plomberie)",
+  "Volets / Fenêtres",
+  "Climatisation",
   "Général (Placo)",
   "Général",
   "Imprévus",
@@ -534,7 +536,24 @@ function render() {
     byRoom.set(room, arr);
   }
 
+  // Sort rooms so that rooms with already-bought items appear first, then by ROOM_ORDER.
+  const roomMeta = new Map(); // room -> { anyBought: boolean }
+  for (const [room, list] of byRoom.entries()) {
+    let anyBought = false;
+    for (const it of list) {
+      const s = state[it.id] || {};
+      if (normalizeStatus(s.status || "todo") === "bought") {
+        anyBought = true;
+        break;
+      }
+    }
+    roomMeta.set(room, { anyBought });
+  }
+
   const rooms = Array.from(byRoom.keys()).sort((a, b) => {
+    const ab = roomMeta.get(a)?.anyBought ? 0 : 1;
+    const bb = roomMeta.get(b)?.anyBought ? 0 : 1;
+    if (ab !== bb) return ab - bb; // anyBought first
     const ka = roomSortKey(a);
     const kb = roomSortKey(b);
     if (ka !== kb) return ka - kb;
@@ -544,7 +563,12 @@ function render() {
   let shown = 0;
   for (const room of rooms) {
     const roomItems = (byRoom.get(room) || []).slice().sort((a, b) => {
-      if (a.lot !== b.lot) return a.lot - b.lot;
+      const sa = normalizeStatus((state[a.id] || {}).status || "todo");
+      const sb = normalizeStatus((state[b.id] || {}).status || "todo");
+      const ra = sa === "bought" ? 0 : 1;
+      const rb = sb === "bought" ? 0 : 1;
+      if (ra !== rb) return ra - rb; // bought first
+      // fallback stable-ish ordering
       return String(a.article).localeCompare(String(b.article), "fr");
     });
 
