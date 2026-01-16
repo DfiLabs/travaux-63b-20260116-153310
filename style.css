@@ -232,6 +232,12 @@ h1 {
 
 .num { text-align: right; white-space: nowrap; }
 .muted { color: var(--muted); }
+.hint {
+  display: block;
+  margin-top: 4px;
+  color: rgba(183, 196, 230, 0.85);
+  font-size: 12px;
+}
 
 .pill {
   display: inline-flex;

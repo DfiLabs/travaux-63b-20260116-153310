@@ -11,7 +11,7 @@ window.TRAVAUX_ITEMS = [
   { id: "bandes-enduits", lot: 1, room: "Général (Placo)", article: "Bandes + enduits joints", specification: "Bandes papier + enduit + grille", qty: 1, unit: "lot", pu_cents: 15000, budget_total_cents: 15000 },
   { id: "acrylique-visserie", lot: 1, room: "Général (Placo)", article: "Acrylique / visserie", specification: "Joints, cornières, vis, chevilles", qty: 1, unit: "lot", pu_cents: 7000, budget_total_cents: 7000 },
 
-  { id: "tableau-protections", lot: 2, room: "Général (Électricité)", article: "Tableau + protections", specification: "Coffret 2 rangées + DDR + disjoncteurs", qty: 1, unit: "lot", pu_cents: 45000, budget_total_cents: 45000 },
+  { id: "tableau-protections", lot: 2, room: "Général (Électricité)", article: "Tableau + protections", specification: "Coffret 2 rangées + DDR + disjoncteurs", qty: 1, unit: "lot", pu_cents: 45000, budget_total_cents: 45000, hint: "Vous dites: déjà acheté / déjà en stock.", default_status: "bought", default_actual_total_cents: 0, default_comment: "Déjà acheté / déjà en stock (à confirmer)." },
   { id: "cables", lot: 2, room: "Général (Électricité)", article: "Câbles", specification: "3G2.5/3G1.5/fil de terre (reprise circuits)", qty: 1, unit: "lot", pu_cents: 45000, budget_total_cents: 45000 },
   { id: "icta", lot: 2, room: "Général (Électricité)", article: "Gaines ICTA + accessoires", specification: "Gaines, colliers, goulottes ponctuelles", qty: 1, unit: "lot", pu_cents: 16000, budget_total_cents: 16000 },
   { id: "boites-dcl", lot: 2, room: "Général (Électricité)", article: "Boîtes + DCL", specification: "Boîtes encastrement + boîtes dérivation + DCL", qty: 1, unit: "lot", pu_cents: 11000, budget_total_cents: 11000 },
@@ -51,10 +51,10 @@ window.TRAVAUX_ITEMS = [
   { id: "quincaillerie-cuisine", lot: 6, room: "Cuisine", article: "Quincaillerie", specification: "Rails fixation, vis, chevilles", qty: 1, unit: "lot", pu_cents: 6000, budget_total_cents: 6000 },
 
   { id: "sol-lvt", lot: 7, room: "Sols (toutes pièces)", article: "Sol clipsable (LVT/SPC)", specification: "88 m² (80 m² + 10% chutes)", qty: 88, unit: "m²", pu_cents: 1500, budget_total_cents: 132000 },
-  { id: "sous-couche", lot: 7, room: "Sols (toutes pièces)", article: "Sous-couche", specification: "Sous-couche compatible LVT", qty: 88, unit: "m²", pu_cents: 220, budget_total_cents: 19360 },
+  { id: "sous-couche", lot: 7, room: "Sols (toutes pièces)", article: "Sous-couche", specification: "Sous-couche compatible LVT", qty: 88, unit: "m²", pu_cents: 220, budget_total_cents: 19360, hint: "Vous dites: quantité un peu élevée → à vérifier.", default_comment: "Quantité à vérifier (semble trop élevée)." },
   { id: "plinthes", lot: 7, room: "Sols (toutes pièces)", article: "Plinthes", specification: "Plinthes MDF", qty: 70, unit: "m", pu_cents: 350, budget_total_cents: 24500 },
   { id: "profiles-seuils", lot: 7, room: "Sols (toutes pièces)", article: "Profilés / seuils", specification: "8 pièces", qty: 8, unit: "u", pu_cents: 1500, budget_total_cents: 12000 },
-  { id: "ragreage", lot: 7, room: "Sols (toutes pièces)", article: "Ragréage", specification: "4 sacs", qty: 4, unit: "sac", pu_cents: 2800, budget_total_cents: 11200 },
+  { id: "ragreage", lot: 7, room: "Sols (toutes pièces)", article: "Ragréage", specification: "4 sacs", qty: 4, unit: "sac", pu_cents: 2800, budget_total_cents: 11200, hint: "Vous dites: quantité un peu élevée → à vérifier.", default_comment: "Quantité à vérifier (semble trop élevée)." },
   { id: "primaire-5l", lot: 7, room: "Sols (toutes pièces)", article: "Primaire", specification: "5 L", qty: 1, unit: "u", pu_cents: 3000, budget_total_cents: 3000 },
   { id: "carrelage", lot: 7, room: "Salle de bain", article: "Carrelage / faïence", specification: "23 m² (douche + sol SDB) + 10% chutes", qty: 23, unit: "m²", pu_cents: 1600, budget_total_cents: 36800 },
   { id: "colle-carrelage", lot: 7, room: "Salle de bain", article: "Colle carrelage", specification: "5 sacs", qty: 5, unit: "sac", pu_cents: 2000, budget_total_cents: 10000 },
@@ -65,10 +65,10 @@ window.TRAVAUX_ITEMS = [
   { id: "enduits", lot: 8, room: "Peintures (toutes pièces)", article: "Enduits", specification: "Rebouchage / lissage", qty: 1, unit: "lot", pu_cents: 8000, budget_total_cents: 8000 },
   { id: "abrasifs", lot: 8, room: "Peintures (toutes pièces)", article: "Abrasifs", specification: "Papier / disques", qty: 1, unit: "lot", pu_cents: 6000, budget_total_cents: 6000 },
   { id: "sous-couche-15l", lot: 8, room: "Peintures (toutes pièces)", article: "Sous-couche", specification: "15 L", qty: 1, unit: "lot", pu_cents: 9000, budget_total_cents: 9000 },
-  { id: "peinture-plafond", lot: 8, room: "Peintures (toutes pièces)", article: "Peinture plafond", specification: "20 L", qty: 1, unit: "lot", pu_cents: 14000, budget_total_cents: 14000 },
+  { id: "peinture-plafond", lot: 8, room: "Peintures (toutes pièces)", article: "Peinture plafond", specification: "20 L", qty: 1, unit: "lot", pu_cents: 14000, budget_total_cents: 14000, hint: "Vous dites: un peu trop → à vérifier le volume.", default_comment: "Volume à vérifier (20L semble beaucoup)." },
   { id: "peinture-murs", lot: 8, room: "Peintures (toutes pièces)", article: "Peinture murs", specification: "50 L", qty: 1, unit: "lot", pu_cents: 35000, budget_total_cents: 35000 },
   { id: "peinture-boiseries", lot: 8, room: "Peintures (toutes pièces)", article: "Peinture boiseries", specification: "2,5 L", qty: 1, unit: "lot", pu_cents: 4000, budget_total_cents: 4000 },
-  { id: "rouleaux-bacs", lot: 8, room: "Peintures (toutes pièces)", article: "Rouleaux / bacs", specification: "Consommables", qty: 1, unit: "lot", pu_cents: 8000, budget_total_cents: 8000 },
+  { id: "rouleaux-bacs", lot: 8, room: "Peintures (toutes pièces)", article: "Rouleaux / bacs", specification: "Consommables", qty: 1, unit: "lot", pu_cents: 8000, budget_total_cents: 8000, hint: "Vous dites: déjà en stock.", default_status: "bought", default_actual_total_cents: 0, default_comment: "Déjà en stock." },
 
   { id: "osb", lot: 9, room: "Combles", article: "OSB 18 mm", specification: "13 plaques", qty: 13, unit: "plaque", pu_cents: 2200, budget_total_cents: 28600 },
   { id: "bois-renforts", lot: 9, room: "Combles", article: "Bois renforts", specification: "Lambourdes / chevrons", qty: 1, unit: "lot", pu_cents: 45000, budget_total_cents: 45000 },
@@ -93,7 +93,7 @@ window.TRAVAUX_ITEMS = [
   { id: "liaisons-frigo", lot: 11, room: "Climatisation", article: "Liaisons frigorifiques", specification: "2 x 10 m", qty: 20, unit: "m", pu_cents: 1200, budget_total_cents: 24000 },
   { id: "goulottes", lot: 11, room: "Climatisation", article: "Goulottes", specification: "Habillage lignes", qty: 1, unit: "lot", pu_cents: 11000, budget_total_cents: 11000 },
   { id: "support-ext", lot: 11, room: "Climatisation", article: "Support extérieur", specification: "Support + silentblocs", qty: 1, unit: "lot", pu_cents: 12000, budget_total_cents: 12000 },
-  { id: "pompe-condensats", lot: 11, room: "Climatisation", article: "Pompe condensats", specification: "Mini-pompe (combles)", qty: 1, unit: "u", pu_cents: 13500, budget_total_cents: 13500 },
+  { id: "pompe-condensats", lot: 11, room: "Climatisation", article: "Pompe condensats", specification: "Mini-pompe (combles)", qty: 1, unit: "u", pu_cents: 13500, budget_total_cents: 13500, hint: "Question: déjà incluse dans le kit clim ?", default_comment: "À vérifier: mini-pompe déjà incluse/livrée avec le kit clim ?" },
   { id: "evac-condensats", lot: 11, room: "Climatisation", article: "Évac condensats", specification: "Tuyaux + accessoires", qty: 1, unit: "lot", pu_cents: 4000, budget_total_cents: 4000 },
   { id: "alim-clim", lot: 11, room: "Climatisation", article: "Alimentation clim", specification: "Sectionneur + câble", qty: 1, unit: "lot", pu_cents: 8500, budget_total_cents: 8500 },
 

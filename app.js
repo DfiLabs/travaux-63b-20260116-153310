@@ -63,6 +63,38 @@ function loadState() {
   }
 }
 
+function applyItemDefaults(items, state) {
+  // Apply defaults only when the user has no existing value for that field.
+  // Stored once, so sharing/export includes them too.
+  const meta = state.__meta && typeof state.__meta === "object" ? state.__meta : {};
+  const version = 1;
+  if (meta.defaultsAppliedVersion === version) return state;
+
+  let changed = false;
+  for (const it of items) {
+    if (!state[it.id]) state[it.id] = {};
+    const s = state[it.id];
+    if (s && typeof s === "object") {
+      if (!("status" in s) && it.default_status) {
+        s.status = normalizeStatus(it.default_status);
+        changed = true;
+      }
+      if (!("actual_total_cents" in s) && typeof it.default_actual_total_cents === "number") {
+        s.actual_total_cents = it.default_actual_total_cents;
+        changed = true;
+      }
+      if (!("comment" in s) && it.default_comment) {
+        s.comment = it.default_comment;
+        changed = true;
+      }
+    }
+  }
+
+  state.__meta = { ...meta, defaultsAppliedVersion: version };
+  if (changed) saveState(state);
+  return state;
+}
+
 function saveState(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
@@ -226,7 +258,7 @@ function drawDonut(canvas, bought, remaining) {
 
 function render() {
   const items = window.TRAVAUX_ITEMS || [];
-  const state = loadState();
+  const state = applyItemDefaults(items, loadState());
 
   const lotFilter = document.getElementById("lotFilter");
   const roomFilter = document.getElementById("roomFilter");
@@ -296,6 +328,12 @@ function render() {
 
     const tdSpec = document.createElement("td");
     tdSpec.textContent = it.specification;
+    if (it.hint) {
+      const hint = document.createElement("span");
+      hint.className = "hint";
+      hint.textContent = it.hint;
+      tdSpec.appendChild(hint);
+    }
 
     const tdQty = document.createElement("td");
     tdQty.className = "num";
