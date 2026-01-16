@@ -16,6 +16,18 @@ function clampInt(n, fallback = 0) {
   return Number.isFinite(x) ? x : fallback;
 }
 
+function getBudgetCents(it, state) {
+  const s = (state && state[it.id]) ? state[it.id] : {};
+  const override = s && typeof s.budget_override_cents === "number" ? s.budget_override_cents : null;
+  return override != null ? override : (it.budget_total_cents || 0);
+}
+
+function getActualCents(it, state) {
+  const s = (state && state[it.id]) ? state[it.id] : {};
+  if (s && typeof s.actual_total_cents === "number") return s.actual_total_cents;
+  return getBudgetCents(it, state);
+}
+
 function parseEuroToCents(text, fallbackCents) {
   if (text == null) return fallbackCents;
   const raw = String(text)
@@ -388,14 +400,14 @@ function makeStatusPill(status) {
 }
 
 function computeBudgetTotal(items) {
-  return items.reduce((acc, x) => acc + (x.budget_total_cents || 0), 0);
+  const state = loadState();
+  return items.reduce((acc, it) => acc + getBudgetCents(it, state), 0);
 }
 
 function computeActualTotal(items, state) {
   let total = 0;
   for (const it of items) {
-    const s = (state[it.id] || {});
-    const actual = clampInt(s.actual_total_cents, it.budget_total_cents);
+    const actual = getActualCents(it, state);
     total += actual;
   }
   return total;
@@ -410,7 +422,7 @@ function computeBoughtVsRemaining(items, state) {
   for (const it of items) {
     const s = (state[it.id] || {});
     const status = normalizeStatus(s.status || "todo");
-    const val = clampInt(s.actual_total_cents, it.budget_total_cents);
+    const val = getActualCents(it, state);
 
     if (status === "bought") {
       boughtCents += val;
@@ -580,9 +592,8 @@ function render() {
     for (const it of roomItems) {
       const s = state[it.id] || {};
       const st = normalizeStatus(s.status || "todo");
-      const actual = clampInt(s.actual_total_cents, it.budget_total_cents);
-      roomBudget += (it.budget_total_cents || 0);
-      roomActual += actual;
+      roomBudget += getBudgetCents(it, state);
+      roomActual += getActualCents(it, state);
       if (st === "bought") roomBought += 1;
     }
     const roomDelta = roomActual - roomBudget;
@@ -606,7 +617,7 @@ function render() {
     for (const it of roomItems) {
       const s = state[it.id] || {};
       const status = normalizeStatus(s.status || "todo");
-      const actual = clampInt(s.actual_total_cents, it.budget_total_cents);
+      const actual = getActualCents(it, state);
 
       const tr = document.createElement("tr");
 
@@ -635,7 +646,26 @@ function render() {
 
     const tdBudget = document.createElement("td");
     tdBudget.className = "num";
-    tdBudget.textContent = eur(it.budget_total_cents);
+      if (it.editable_budget) {
+        const budgetInput = document.createElement("input");
+        budgetInput.className = "budget-input";
+        budgetInput.type = "text";
+        budgetInput.inputMode = "decimal";
+        budgetInput.placeholder = "€";
+        const currentBudget = getBudgetCents(it, state);
+        budgetInput.value = currentBudget ? eurInput(currentBudget) : "";
+        budgetInput.title = "Budget total en € (ex: 120 ou 120,50).";
+        budgetInput.addEventListener("blur", () => {
+          const v = parseEuroToCents(budgetInput.value, 0);
+          if (!state[it.id]) state[it.id] = {};
+          state[it.id].budget_override_cents = v;
+          saveState(state);
+          render();
+        });
+        tdBudget.appendChild(budgetInput);
+      } else {
+        tdBudget.textContent = eur(getBudgetCents(it, state));
+      }
 
     const tdActual = document.createElement("td");
     tdActual.className = "num";
@@ -647,7 +677,7 @@ function render() {
     if (actual > it.budget_total_cents) actualInput.classList.add("exceed");
     actualInput.title = "Entrez un total réel en € (ex: 200 ou 200,50).";
     actualInput.addEventListener("blur", () => {
-      const v = parseEuroToCents(actualInput.value, it.budget_total_cents);
+      const v = parseEuroToCents(actualInput.value, getBudgetCents(it, state));
       if (!state[it.id]) state[it.id] = {};
       state[it.id].actual_total_cents = v;
       saveState(state);
@@ -750,9 +780,9 @@ function renderTotals(items, state, shownOverride) {
       const room = it.room || "—";
       const s = (state[it.id] || {});
       const status = normalizeStatus(s.status || "todo");
-      const actualLine = clampInt(s.actual_total_cents, it.budget_total_cents);
+      const actualLine = getActualCents(it, state);
       const entry = agg.get(room) || { budget: 0, actual: 0, lines: 0, boughtLines: 0 };
-      entry.budget += (it.budget_total_cents || 0);
+      entry.budget += getBudgetCents(it, state);
       entry.actual += actualLine;
       entry.lines += 1;
       if (status === "bought") entry.boughtLines += 1;

@@ -507,6 +507,16 @@ h1 {
   outline: none;
   text-align: right;
 }
+.budget-input {
+  width: 120px;
+  border-radius: 10px;
+  border: 1px dashed rgba(122,162,255,0.55);
+  background: rgba(0,0,0,0.25);
+  color: var(--text);
+  padding: 8px 9px;
+  outline: none;
+  text-align: right;
+}
 .actual-input.exceed {
   border-color: rgba(255, 204, 0, 0.7);
   box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.12);
