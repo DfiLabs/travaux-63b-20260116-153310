@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Suivi Travaux 63B</title>
-    <link rel="stylesheet" href="./style.css?v=20260116-5" />
+    <link rel="stylesheet" href="./style.css?v=20260116-6" />
   </head>
   <body>
     <header class="header">
@@ -29,8 +29,7 @@
         </div>
 
         <div class="tabs" role="tablist" aria-label="Navigation">
-          <button class="tab active" type="button" data-view="achats">Achats (appartement)</button>
-          <button class="tab" type="button" data-view="bought">2) Déjà acheté (communs + toiture)</button>
+          <button class="tab active" type="button" data-view="materials">Matériaux</button>
           <button class="tab" type="button" data-view="planning">Planning</button>
         </div>
 
@@ -118,7 +117,24 @@
     </header>
 
     <main class="container">
-      <section id="view-achats" class="view active">
+      <section id="view-materials" class="view active">
+        <div class="material-top">
+          <div class="material-progress">
+            <div class="progress-head">
+              <div class="progress-title">Suivi matériaux</div>
+              <div id="materialsProgressText" class="progress-sub">—</div>
+            </div>
+            <div class="progress-bar">
+              <div id="materialsProgressFill" class="progress-fill"></div>
+            </div>
+          </div>
+          <div class="material-quick">
+            <button id="toggleTodoBtn" class="btn btn-secondary" type="button">Voir “À acheter”</button>
+            <button id="toggleBoughtBtn" class="btn btn-secondary" type="button">Voir “Acheté”</button>
+            <button id="resetFiltersBtn" class="btn" type="button">Réinitialiser filtres</button>
+          </div>
+        </div>
+
         <div class="table-wrap">
           <table class="table" id="itemsTable">
             <thead>
@@ -145,14 +161,12 @@
             “Exporter” pour partager un fichier, ou “Générer lien” pour obtenir une URL partageable.
           </p>
         </footer>
-      </section>
 
-      <section id="view-bought" class="view">
         <div class="section-card">
           <h2>2) Ce qui a été acheté (communs + colmatage toiture)</h2>
           <p class="section-sub">
             Deux niveaux: <strong>confirmé</strong> (vu explicitement) et <strong>très probable</strong>
-            (car “communs + toiture finis”). Vous pouvez cocher “confirmé” et ajouter un commentaire.
+            (car “communs + toiture finis”). Cochez + ajoutez un commentaire si besoin.
           </p>
           <div id="boughtFeatures"></div>
         </div>
@@ -164,13 +178,22 @@
           <p class="section-sub">
             Hypothèses: pas de gros imprévu structurel, matos dispo, interventions externes (clim) calées.
           </p>
+          <div class="material-progress">
+            <div class="progress-head">
+              <div class="progress-title">Avancement planning</div>
+              <div id="planningProgressText" class="progress-sub">—</div>
+            </div>
+            <div class="progress-bar">
+              <div id="planningProgressFill" class="progress-fill"></div>
+            </div>
+          </div>
           <div id="planning"></div>
         </div>
       </section>
     </main>
 
-    <script src="./items.js?v=20260116-5"></script>
-    <script src="./app.js?v=20260116-5"></script>
+    <script src="./items.js?v=20260116-6"></script>
+    <script src="./app.js?v=20260116-6"></script>
   </body>
 </html>
 

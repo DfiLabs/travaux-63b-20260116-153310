@@ -87,6 +87,60 @@ h1 {
   border-color: rgba(122,162,255,0.45);
 }
 
+.material-top {
+  margin-top: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.material-progress {
+  flex: 1;
+  min-width: 280px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.18);
+  border-radius: 16px;
+  padding: 12px 12px;
+}
+.progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.progress-title {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+.progress-sub {
+  color: var(--muted);
+  font-size: 12px;
+}
+.progress-bar {
+  margin-top: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(48,209,88,0.95), rgba(122,162,255,0.95));
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25);
+}
+.material-quick {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 .btn {
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.06);
@@ -101,6 +155,10 @@ h1 {
 .btn:hover { background: rgba(255, 255, 255, 0.10); border-color: rgba(255, 255, 255, 0.18); }
 .btn:active { transform: translateY(1px); }
 .btn-secondary { background: rgba(122, 162, 255, 0.10); }
+.btn-toggle.active {
+  background: rgba(48,209,88,0.14);
+  border-color: rgba(48,209,88,0.45);
+}
 .btn-danger { background: rgba(255, 95, 109, 0.14); border-color: rgba(255, 95, 109, 0.35); }
 .file-btn input { display: none; }
 
@@ -110,6 +168,7 @@ h1 {
   grid-template-columns: 140px 200px 1fr 160px;
   gap: 12px;
 }
+.controls.hidden { display: none; }
 @media (max-width: 900px) {
   .controls { grid-template-columns: 1fr; }
 }
@@ -137,6 +196,7 @@ h1 {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 12px;
 }
+.summary.hidden { display: none; }
 @media (max-width: 900px) {
   .summary { grid-template-columns: 1fr; }
 }
@@ -319,6 +379,30 @@ h1 {
   color: var(--muted);
   font-size: 12px;
   margin-bottom: 10px;
+}
+.week-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0 10px;
+}
+.week-progress {
+  margin-top: 8px;
+}
+.week-progress .progress-bar { margin-top: 6px; }
+.week-notes {
+  margin-top: 10px;
+}
+.week-notes textarea {
+  width: 100%;
+  min-height: 70px;
+  resize: vertical;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.25);
+  color: var(--text);
+  padding: 10px 10px;
+  outline: none;
 }
 .task {
   display: grid;

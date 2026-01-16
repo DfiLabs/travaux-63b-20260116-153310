@@ -201,13 +201,21 @@ function applyFeatureDefaults(state) {
 }
 
 function setView(view) {
+  const v = (view === "achats" || view === "bought") ? "materials" : (view || "materials");
   document.querySelectorAll(".view").forEach((el) => {
-    el.classList.toggle("active", el.id === `view-${view}`);
+    el.classList.toggle("active", el.id === `view-${v}`);
   });
   document.querySelectorAll(".tab").forEach((el) => {
-    el.classList.toggle("active", el.dataset.view === view);
+    el.classList.toggle("active", el.dataset.view === v);
   });
-  localStorage.setItem(VIEW_KEY, view);
+  localStorage.setItem(VIEW_KEY, v);
+
+  // Hide material filters + summary when in planning (less clutter)
+  const controls = document.querySelector(".controls");
+  const summary = document.querySelector(".summary");
+  if (controls) controls.classList.toggle("hidden", v === "planning");
+  if (summary) summary.classList.toggle("hidden", v === "planning");
+
   setStickyHeaderOffset();
 }
 
@@ -216,7 +224,7 @@ function wireViews() {
     btn.addEventListener("click", () => setView(btn.dataset.view));
   });
   const saved = localStorage.getItem(VIEW_KEY);
-  setView(saved || "achats");
+  setView(saved || "materials");
 }
 
 function renderBoughtFeatures(state) {
@@ -310,6 +318,63 @@ function renderPlanning(state) {
     card.appendChild(title);
     card.appendChild(sub);
 
+    // Per-week progress + actions
+    const ids = w.tasks.map((_, idx) => `plan_${w.id}_${idx}`);
+    const doneCount = ids.reduce((acc, id) => acc + (features.planning[id]?.done ? 1 : 0), 0);
+    const pct = Math.round((doneCount / Math.max(1, ids.length)) * 100);
+
+    const progressWrap = document.createElement("div");
+    progressWrap.className = "week-progress";
+    const progressHead = document.createElement("div");
+    progressHead.className = "progress-head";
+    const pt = document.createElement("div");
+    pt.className = "progress-title";
+    pt.textContent = `Avancement: ${pct}%`;
+    const ps = document.createElement("div");
+    ps.className = "progress-sub";
+    ps.textContent = `${doneCount}/${ids.length} cochées`;
+    progressHead.appendChild(pt);
+    progressHead.appendChild(ps);
+    const pb = document.createElement("div");
+    pb.className = "progress-bar";
+    const pf = document.createElement("div");
+    pf.className = "progress-fill";
+    pf.style.width = `${pct}%`;
+    pb.appendChild(pf);
+    progressWrap.appendChild(progressHead);
+    progressWrap.appendChild(pb);
+    card.appendChild(progressWrap);
+
+    const actions = document.createElement("div");
+    actions.className = "week-actions";
+    const allBtn = document.createElement("button");
+    allBtn.className = "btn btn-secondary";
+    allBtn.type = "button";
+    allBtn.textContent = "Tout cocher";
+    allBtn.addEventListener("click", () => {
+      ids.forEach((id) => {
+        if (!features.planning[id]) features.planning[id] = { done: false };
+        features.planning[id].done = true;
+      });
+      saveState(state);
+      render();
+    });
+    const noneBtn = document.createElement("button");
+    noneBtn.className = "btn";
+    noneBtn.type = "button";
+    noneBtn.textContent = "Tout décocher";
+    noneBtn.addEventListener("click", () => {
+      ids.forEach((id) => {
+        if (!features.planning[id]) features.planning[id] = { done: false };
+        features.planning[id].done = false;
+      });
+      saveState(state);
+      render();
+    });
+    actions.appendChild(allBtn);
+    actions.appendChild(noneBtn);
+    card.appendChild(actions);
+
     w.tasks.forEach((t, idx) => {
       const id = `plan_${w.id}_${idx}`;
       const entry = features.planning[id] || { done: false };
@@ -335,10 +400,53 @@ function renderPlanning(state) {
       card.appendChild(row);
     });
 
+    // Notes per week
+    const noteId = `note_${w.id}`;
+    if (!features.planning[noteId]) features.planning[noteId] = { note: "" };
+    const notes = document.createElement("div");
+    notes.className = "week-notes";
+    const ta = document.createElement("textarea");
+    ta.placeholder = "Notes / questions / dépendances…";
+    ta.value = features.planning[noteId].note || "";
+    ta.addEventListener("input", () => {
+      features.planning[noteId].note = ta.value;
+      saveState(state);
+    });
+    notes.appendChild(ta);
+    card.appendChild(notes);
+
     grid.appendChild(card);
   }
 
   container.appendChild(grid);
+}
+
+function renderTopProgress(items, state) {
+  // Materials progress (line-based)
+  const { boughtCount, remainingCount, boughtCents, remainingCents } = computeBoughtVsRemaining(items, state);
+  const totalLines = boughtCount + remainingCount;
+  const pctLines = Math.round((boughtCount / Math.max(1, totalLines)) * 100);
+  const fill = document.getElementById("materialsProgressFill");
+  const text = document.getElementById("materialsProgressText");
+  if (fill) fill.style.width = `${pctLines}%`;
+  if (text) text.textContent = `${pctLines}% • ${boughtCount}/${totalLines} lignes achetées • ${eur(boughtCents)} / ${eur(boughtCents + remainingCents)}`;
+
+  // Planning progress (task-based)
+  const features = getFeaturesState(state);
+  let totalTasks = 0;
+  let doneTasks = 0;
+  for (const w of PLANNING_WEEKS) {
+    totalTasks += w.tasks.length;
+    for (let i = 0; i < w.tasks.length; i += 1) {
+      const id = `plan_${w.id}_${i}`;
+      if (features.planning[id]?.done) doneTasks += 1;
+    }
+  }
+  const pctTasks = Math.round((doneTasks / Math.max(1, totalTasks)) * 100);
+  const pFill = document.getElementById("planningProgressFill");
+  const pText = document.getElementById("planningProgressText");
+  if (pFill) pFill.style.width = `${pctTasks}%`;
+  if (pText) pText.textContent = `${pctTasks}% • ${doneTasks}/${totalTasks} tâches cochées`;
 }
 
 function saveState(state) {
@@ -750,6 +858,7 @@ function render() {
   renderTotals(items, state, shown);
   renderBoughtFeatures(state);
   renderPlanning(state);
+  renderTopProgress(items, state);
 }
 
 function renderTotals(items, state, shownOverride) {
@@ -857,6 +966,34 @@ function wireActions() {
     window.clearTimeout(searchInput._t);
     searchInput._t = window.setTimeout(render, 80);
   });
+
+  // Quick filter buttons
+  const toggleTodoBtn = document.getElementById("toggleTodoBtn");
+  const toggleBoughtBtn = document.getElementById("toggleBoughtBtn");
+  const resetFiltersBtn = document.getElementById("resetFiltersBtn");
+  if (toggleTodoBtn) {
+    toggleTodoBtn.classList.add("btn-toggle");
+    toggleTodoBtn.addEventListener("click", () => {
+      statusFilter.value = "todo";
+      render();
+    });
+  }
+  if (toggleBoughtBtn) {
+    toggleBoughtBtn.classList.add("btn-toggle");
+    toggleBoughtBtn.addEventListener("click", () => {
+      statusFilter.value = "bought";
+      render();
+    });
+  }
+  if (resetFiltersBtn) {
+    resetFiltersBtn.addEventListener("click", () => {
+      lotFilter.value = "ALL";
+      if (roomFilter) roomFilter.value = "ALL";
+      statusFilter.value = "ALL";
+      searchInput.value = "";
+      render();
+    });
+  }
 
   document.getElementById("exportBtn").addEventListener("click", () => {
     const state = loadState();
