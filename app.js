@@ -184,7 +184,7 @@ function setView(view) {
 
   // Hide material filters + summary when not in materials (keep it simple)
   const controls = document.querySelector(".controls");
-  const summary = document.querySelector(".summary");
+  const summary = document.querySelector("#view-materials .summary");
   const hide = v !== "materials";
   if (controls) controls.classList.toggle("hidden", hide);
   if (summary) summary.classList.toggle("hidden", hide);
@@ -453,6 +453,176 @@ function computeActualTotal(items, state) {
   return total;
 }
 
+function isInvoiceItem(it) {
+  return !!it && (it.is_invoice === true || String(it.id || "").startsWith("inv-"));
+}
+
+function computeInvoiceSpent(invoiceItems, state) {
+  let cents = 0;
+  let invoiceCount = 0;
+  let boughtInvoices = 0;
+
+  for (const it of invoiceItems) {
+    invoiceCount += 1;
+    const s = (state[it.id] || {});
+    const status = normalizeStatus(s.status || it.default_status || "todo");
+    if (status !== "bought") continue;
+    cents += getActualCents(it, state);
+    boughtInvoices += 1;
+  }
+
+  return { cents, invoiceCount, boughtInvoices };
+}
+
+function getGlobalBudgetState(state) {
+  if (!state.__budgetGlobal || typeof state.__budgetGlobal !== "object") state.__budgetGlobal = {};
+  return state.__budgetGlobal;
+}
+
+function applyGlobalBudgetDefaults(state) {
+  const b = getGlobalBudgetState(state);
+  let changed = false;
+
+  if (typeof b.total_budget_cents !== "number") {
+    b.total_budget_cents = 4000000; // 40 000 €
+    changed = true;
+  }
+  if (typeof b.labor_monthly_cents !== "number") {
+    b.labor_monthly_cents = 280000; // 2 800 €/mois
+    changed = true;
+  }
+  if (typeof b.labor_months_planned !== "number") {
+    b.labor_months_planned = 6; // Jan → Jun (planning)
+    changed = true;
+  }
+  if (typeof b.labor_months_paid !== "number") {
+    // Fin janvier: main d'œuvre de janvier due / à payer
+    b.labor_months_paid = 1;
+    changed = true;
+  }
+  if (typeof b.paid_kevin_cents !== "number") {
+    // Valeur inconnue → par défaut on met 1 mois de MO (à ajuster avec vos virements réels)
+    b.paid_kevin_cents = (b.labor_monthly_cents || 0) * (b.labor_months_paid || 0);
+    changed = true;
+  }
+
+  // sanitize
+  b.total_budget_cents = Math.max(0, Math.round(b.total_budget_cents));
+  b.labor_monthly_cents = Math.max(0, Math.round(b.labor_monthly_cents));
+  b.labor_months_planned = Math.max(0, Math.round(b.labor_months_planned));
+  b.labor_months_paid = Math.max(0, Math.round(b.labor_months_paid));
+  if (b.labor_months_paid > b.labor_months_planned) b.labor_months_paid = b.labor_months_planned;
+  b.paid_kevin_cents = Math.max(0, Math.round(b.paid_kevin_cents));
+
+  if (changed) saveState(state);
+  return state;
+}
+
+function wireGlobalBudgetInputs(state) {
+  const b = getGlobalBudgetState(state);
+
+  const budgetInput = document.getElementById("projectBudgetInput");
+  const paidKevinInput = document.getElementById("paidKevinInput");
+  const laborMonthlyInput = document.getElementById("laborMonthlyInput");
+  const laborMonthsPlannedInput = document.getElementById("laborMonthsPlannedInput");
+  const laborMonthsPaidInput = document.getElementById("laborMonthsPaidInput");
+
+  if (budgetInput && document.activeElement !== budgetInput) budgetInput.value = eurInput(b.total_budget_cents);
+  if (paidKevinInput && document.activeElement !== paidKevinInput) paidKevinInput.value = eurInput(b.paid_kevin_cents || 0);
+  if (laborMonthlyInput && document.activeElement !== laborMonthlyInput) laborMonthlyInput.value = eurInput(b.labor_monthly_cents);
+  if (laborMonthsPlannedInput && document.activeElement !== laborMonthsPlannedInput) laborMonthsPlannedInput.value = String(b.labor_months_planned);
+  if (laborMonthsPaidInput && document.activeElement !== laborMonthsPaidInput) laborMonthsPaidInput.value = String(b.labor_months_paid);
+
+  // Wire once
+  if (budgetInput && !budgetInput.dataset.ready) {
+    budgetInput.dataset.ready = "1";
+    budgetInput.addEventListener("blur", () => {
+      const v = parseEuroToCents(budgetInput.value, b.total_budget_cents);
+      b.total_budget_cents = Math.max(0, v);
+      saveState(state);
+      render();
+    });
+  }
+  if (paidKevinInput && !paidKevinInput.dataset.ready) {
+    paidKevinInput.dataset.ready = "1";
+    paidKevinInput.addEventListener("blur", () => {
+      const v = parseEuroToCents(paidKevinInput.value, b.paid_kevin_cents || 0);
+      b.paid_kevin_cents = Math.max(0, v);
+      saveState(state);
+      render();
+    });
+  }
+  if (laborMonthlyInput && !laborMonthlyInput.dataset.ready) {
+    laborMonthlyInput.dataset.ready = "1";
+    laborMonthlyInput.addEventListener("blur", () => {
+      const v = parseEuroToCents(laborMonthlyInput.value, b.labor_monthly_cents);
+      b.labor_monthly_cents = Math.max(0, v);
+      saveState(state);
+      render();
+    });
+  }
+  if (laborMonthsPlannedInput && !laborMonthsPlannedInput.dataset.ready) {
+    laborMonthsPlannedInput.dataset.ready = "1";
+    laborMonthsPlannedInput.addEventListener("blur", () => {
+      b.labor_months_planned = Math.max(0, clampInt(laborMonthsPlannedInput.value, b.labor_months_planned));
+      if (b.labor_months_paid > b.labor_months_planned) b.labor_months_paid = b.labor_months_planned;
+      saveState(state);
+      render();
+    });
+  }
+  if (laborMonthsPaidInput && !laborMonthsPaidInput.dataset.ready) {
+    laborMonthsPaidInput.dataset.ready = "1";
+    laborMonthsPaidInput.addEventListener("blur", () => {
+      b.labor_months_paid = Math.max(0, clampInt(laborMonthsPaidInput.value, b.labor_months_paid));
+      if (b.labor_months_paid > b.labor_months_planned) b.labor_months_paid = b.labor_months_planned;
+      saveState(state);
+      render();
+    });
+  }
+}
+
+function renderInvoices(invoiceItems, state) {
+  const tbody = document.getElementById("invoicesTbody");
+  const foot = document.getElementById("invoicesFoot");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  const list = invoiceItems.slice().sort((a, b) => {
+    const da = String(a.invoice_date || "");
+    const db = String(b.invoice_date || "");
+    return da.localeCompare(db);
+  });
+
+  for (const it of list) {
+    const tr = document.createElement("tr");
+
+    const tdDate = document.createElement("td");
+    tdDate.textContent = it.invoice_date ? String(it.invoice_date) : "—";
+
+    const tdVendor = document.createElement("td");
+    tdVendor.textContent = it.vendor || it.article || "—";
+
+    const tdNo = document.createElement("td");
+    tdNo.textContent = it.invoice_no ? String(it.invoice_no) : "—";
+
+    const tdSpec = document.createElement("td");
+    tdSpec.textContent = it.default_comment || it.specification || "";
+
+    const tdTtc = document.createElement("td");
+    tdTtc.className = "num";
+    tdTtc.textContent = eur(getActualCents(it, state));
+
+    tr.appendChild(tdDate);
+    tr.appendChild(tdVendor);
+    tr.appendChild(tdNo);
+    tr.appendChild(tdSpec);
+    tr.appendChild(tdTtc);
+    tbody.appendChild(tr);
+  }
+
+  if (foot) foot.textContent = `${list.length} facture(s)`;
+}
+
 function computeBoughtVsRemaining(items, state) {
   let boughtCents = 0;
   let remainingCents = 0;
@@ -537,8 +707,10 @@ function drawDonut(canvas, bought, remaining) {
 }
 
 function render() {
-  const items = window.TRAVAUX_ITEMS || [];
-  const state = applyFeatureDefaults(applyAssumedBudgets(items, applyItemDefaults(items, loadState())));
+  const allItems = window.TRAVAUX_ITEMS || [];
+  const invoiceItems = allItems.filter((it) => isInvoiceItem(it));
+  const items = allItems.filter((it) => !isInvoiceItem(it));
+  const state = applyGlobalBudgetDefaults(applyFeatureDefaults(applyAssumedBudgets(allItems, applyItemDefaults(allItems, loadState()))));
 
   const roomFilter = document.getElementById("roomFilter");
   const statusFilter = document.getElementById("statusFilter");
@@ -721,7 +893,7 @@ function render() {
       if (!state[it.id]) state[it.id] = {};
       state[it.id].actual_total_cents = v;
       saveState(state);
-      renderTotals(items, state);
+      renderTotals(items, invoiceItems, state);
       render(); // re-render to update formatting + exceed styling
     });
     tdActual.appendChild(actualInput);
@@ -740,7 +912,7 @@ function render() {
       if (!state[it.id]) state[it.id] = {};
       state[it.id].status = normalizeStatus(statusSel.value);
       saveState(state);
-      renderTotals(items, state);
+      renderTotals(items, invoiceItems, state);
       render();
     });
     tdStatus.appendChild(makeStatusPill(status));
@@ -775,28 +947,34 @@ function render() {
   }
   }
 
-  renderTotals(items, state, shown);
+  renderTotals(items, invoiceItems, state, shown);
   renderPlanning(state);
   renderTopProgress(items, state);
 }
 
-function renderTotals(items, state, shownOverride) {
+function renderTotals(items, invoiceItems, state, shownOverride) {
   const budget = computeBudgetTotal(items, state);
   const actual = computeActualTotal(items, state);
   const delta = actual - budget;
 
-  document.getElementById("budgetTotal").textContent = eur(budget);
-  document.getElementById("actualTotal").textContent = eur(actual);
+  const budgetEl = document.getElementById("budgetTotal");
+  if (budgetEl) budgetEl.textContent = eur(budget);
+  const actualEl = document.getElementById("actualTotal");
+  if (actualEl) actualEl.textContent = eur(actual);
 
   const deltaEl = document.getElementById("deltaTotal");
-  const sign = delta === 0 ? "" : (delta > 0 ? "+" : "");
-  deltaEl.textContent = `Δ ${sign}${eur(delta)}`;
-  deltaEl.classList.remove("positive", "negative", "neutral");
-  deltaEl.classList.add(delta > 0 ? "negative" : (delta < 0 ? "positive" : "neutral"));
+  if (deltaEl) {
+    const sign = delta === 0 ? "" : (delta > 0 ? "+" : "");
+    deltaEl.textContent = `Δ ${sign}${eur(delta)}`;
+    deltaEl.classList.remove("positive", "negative", "neutral");
+    deltaEl.classList.add(delta > 0 ? "negative" : (delta < 0 ? "positive" : "neutral"));
+  }
 
   const shown = typeof shownOverride === "number" ? shownOverride : items.length;
-  document.getElementById("lineCount").textContent = `${shown}`;
-  document.getElementById("lineCount2").textContent = `sur ${items.length} lignes`;
+  const lc = document.getElementById("lineCount");
+  const lc2 = document.getElementById("lineCount2");
+  if (lc) lc.textContent = `${shown}`;
+  if (lc2) lc2.textContent = `sur ${items.length} lignes`;
 
   // Pie chart + legend
   const { boughtCents, remainingCents, boughtCount, remainingCount } = computeBoughtVsRemaining(items, state);
@@ -811,6 +989,55 @@ function renderTotals(items, state, shownOverride) {
   if (legendBought) legendBought.textContent = `${eur(boughtCents)} • ${boughtCount} ligne(s)`;
   if (legendRemaining) legendRemaining.textContent = `${eur(remainingCents)} • ${remainingCount} ligne(s)`;
   if (legendFoot) legendFoot.textContent = `Progression: ${pct}% (par nombre de lignes) — basé sur les statuts.`;
+
+  // Budget global + factures (onglet Budget)
+  const inv = computeInvoiceSpent(invoiceItems || [], state);
+  const invEl = document.getElementById("invoiceTotal");
+  const invSub = document.getElementById("invoiceSub");
+  if (invEl) invEl.textContent = eur(inv.cents);
+  if (invSub) invSub.textContent = `${inv.boughtInvoices}/${inv.invoiceCount} facture(s) cochée(s)`;
+  renderInvoices(invoiceItems || [], state);
+
+  const gb = getGlobalBudgetState(state);
+  const totalBudget = gb.total_budget_cents || 0;
+  const laborMonthly = gb.labor_monthly_cents || 0;
+  const monthsPlanned = gb.labor_months_planned || 0;
+  const monthsPaid = Math.min(monthsPlanned, gb.labor_months_paid || 0);
+  const paidKevin = gb.paid_kevin_cents || 0;
+
+  const laborBudget = laborMonthly * monthsPlanned;
+  const laborSpent = laborMonthly * monthsPaid;
+  const laborRemaining = laborBudget - laborSpent;
+
+  const materialBudget = Math.max(0, totalBudget - laborBudget);
+  const materialSpent = inv.cents;
+  const materialRemaining = materialBudget - materialSpent;
+
+  const remainingGlobal = totalBudget - paidKevin;
+  const materialPaidViaKevin = paidKevin - laborSpent;
+  const deltaVsInvoices = materialPaidViaKevin - materialSpent;
+  const signDelta = deltaVsInvoices === 0 ? "" : (deltaVsInvoices > 0 ? "+" : "");
+
+  const setText = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+
+  setText("projectBudgetTotal", eur(totalBudget));
+  setText("projectBudgetSub", `Main d'œuvre: ${monthsPlanned} mois × ${eur(laborMonthly)} = ${eur(laborBudget)}`);
+  setText("laborSpent", eur(laborSpent));
+  setText("laborSpentSub", `${monthsPaid}/${monthsPlanned} mois payés (${eur(laborMonthly)}/mois)`);
+  setText("laborRemaining", eur(laborRemaining));
+  setText("laborRemainingSub", `${Math.max(0, monthsPlanned - monthsPaid)} mois restants`);
+  setText("materialSpent", eur(materialSpent));
+  setText("materialSpentSub", `Basé sur les factures (TTC)`);
+  setText("materialRemaining", eur(materialRemaining));
+  setText("materialRemainingSub", `Budget matériaux: ${eur(materialBudget)}`);
+  setText("paidKevinTotal", eur(paidKevin));
+  setText("paidKevinSub", `Payé - MO = ${eur(materialPaidViaKevin)} • Δ vs factures: ${signDelta}${eur(deltaVsInvoices)}`);
+  setText("projectRemainingTotal", eur(remainingGlobal));
+  setText("projectRemainingSub", `Budget total ${eur(totalBudget)} - payé Kevin ${eur(paidKevin)}`);
+  wireGlobalBudgetInputs(state);
 
   // Budget par pièce
   const roomsTbody = document.getElementById("roomsTbody");

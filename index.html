@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Suivi Travaux 63B</title>
-    <link rel="stylesheet" href="./style.css?v=20260116-14" />
+    <link rel="stylesheet" href="./style.css?v=20260125-invoices1" />
   </head>
   <body>
     <header class="header">
@@ -125,6 +125,101 @@
 
       <section id="view-budget" class="view">
         <div class="section-card">
+          <h2>Budget global (projet)</h2>
+          <p class="section-sub">
+            Budget total, main d'œuvre mensuelle et suivi des paiements. Les valeurs sont mémorisées dans votre navigateur.
+          </p>
+          <div class="budget-controls">
+            <div class="control">
+              <label for="projectBudgetInput">Budget total (€)</label>
+              <input id="projectBudgetInput" type="text" inputmode="decimal" placeholder="40000" />
+            </div>
+            <div class="control">
+              <label for="paidKevinInput">Total payé à Kevin (cumul €)</label>
+              <input id="paidKevinInput" type="text" inputmode="decimal" placeholder="0" />
+            </div>
+            <div class="control">
+              <label for="laborMonthlyInput">Main d'œuvre / mois (€)</label>
+              <input id="laborMonthlyInput" type="text" inputmode="decimal" placeholder="2800" />
+            </div>
+            <div class="control">
+              <label for="laborMonthsPlannedInput">Mois prévus</label>
+              <input id="laborMonthsPlannedInput" type="number" min="0" step="1" />
+            </div>
+            <div class="control">
+              <label for="laborMonthsPaidInput">Mois payés (main d'œuvre)</label>
+              <input id="laborMonthsPaidInput" type="number" min="0" step="1" />
+            </div>
+          </div>
+          <div class="summary budget-summary">
+            <div class="card">
+              <div class="card-title">Budget total (projet)</div>
+              <div id="projectBudgetTotal" class="card-value">—</div>
+              <div id="projectBudgetSub" class="card-sub">—</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Payé à Kevin (total)</div>
+              <div id="paidKevinTotal" class="card-value">—</div>
+              <div id="paidKevinSub" class="card-sub">—</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Reste budget (global)</div>
+              <div id="projectRemainingTotal" class="card-value">—</div>
+              <div id="projectRemainingSub" class="card-sub">—</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Main d'œuvre payée</div>
+              <div id="laborSpent" class="card-value">—</div>
+              <div id="laborSpentSub" class="card-sub">—</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Main d'œuvre restante</div>
+              <div id="laborRemaining" class="card-value">—</div>
+              <div id="laborRemainingSub" class="card-sub">—</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Matériaux dépensés (factures)</div>
+              <div id="materialSpent" class="card-value">—</div>
+              <div id="materialSpentSub" class="card-sub">—</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Matériaux restants</div>
+              <div id="materialRemaining" class="card-value">—</div>
+              <div id="materialRemainingSub" class="card-sub">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2>Factures (TTC)</h2>
+          <p class="section-sub">
+            Liste des factures / tickets ajoutés. Le total sert à calculer “Matériaux dépensés”.
+          </p>
+          <div class="summary budget-summary">
+            <div class="card">
+              <div class="card-title">Total factures (cochées)</div>
+              <div id="invoiceTotal" class="card-value">—</div>
+              <div id="invoiceSub" class="card-sub">—</div>
+            </div>
+          </div>
+          <div class="table-wrap table-wrap-scroll">
+            <table class="room-table invoice-table" aria-label="Factures">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Fournisseur</th>
+                  <th>N°</th>
+                  <th>Détails</th>
+                  <th class="num">Total TTC</th>
+                </tr>
+              </thead>
+              <tbody id="invoicesTbody"></tbody>
+            </table>
+          </div>
+          <p id="invoicesFoot" class="section-sub">—</p>
+        </div>
+
+        <div class="section-card">
           <h2>Budget par pièce</h2>
           <p class="section-sub">Synthèse par zone: budget, réel, écart, lignes achetées.</p>
           <div class="table-wrap table-wrap-scroll">
@@ -165,8 +260,8 @@
       </section>
     </main>
 
-    <script src="./items.js?v=20260116-14"></script>
-    <script src="./app.js?v=20260116-14"></script>
+    <script src="./items.js?v=20260125-invoices1"></script>
+    <script src="./app.js?v=20260125-invoices1"></script>
   </body>
 </html>
 
