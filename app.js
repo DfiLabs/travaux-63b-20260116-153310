@@ -96,7 +96,7 @@ function applyAssumedBudgets(items, state) {
   // have an assumed_budget_cents, set the override to the assumed value so it contributes
   // to totals immediately.
   const meta = state.__meta && typeof state.__meta === "object" ? state.__meta : {};
-  const version = 2;
+  const version = 3;
   if (meta.assumedBudgetsVersion === version) return state;
 
   let changed = false;
@@ -104,6 +104,19 @@ function applyAssumedBudgets(items, state) {
     if (typeof it.assumed_budget_cents !== "number") continue;
     if (!state[it.id] || typeof state[it.id] !== "object") state[it.id] = {};
     const s = state[it.id];
+
+    // If the user previously saved weird values (ex: status todo + actual 0) for the
+    // "Déjà acheté" Communs/Toiture lines, fix them once so totals reflect reality.
+    const id = String(it.id || "");
+    const isAlreadyBoughtGroup = it.lot === 99
+      && (it.room === "Communs" || it.room === "Toiture")
+      && (id.startsWith("communs-") || id.startsWith("toiture-"));
+    if (isAlreadyBoughtGroup) {
+      if (normalizeStatus(s.status) !== "bought") {
+        s.status = "bought";
+        changed = true;
+      }
+    }
 
     const hasOverride = typeof s.budget_override_cents === "number";
     const overrideIsZero = hasOverride && s.budget_override_cents === 0;
