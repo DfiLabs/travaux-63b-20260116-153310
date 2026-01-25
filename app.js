@@ -3,6 +3,33 @@
 const STORAGE_KEY = "travaux63b_comments_v1";
 const VIEW_KEY = "travaux63b_view_v1";
 
+function yyyyMmDd(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function parseYyyyMmDd(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mm = Number(m[2]);
+  const dd = Number(m[3]);
+  const d = new Date(y, mm - 1, dd);
+  if (d.getFullYear() !== y || d.getMonth() !== (mm - 1) || d.getDate() !== dd) return null;
+  return d;
+}
+
+function calendarMonthsInclusive(startDate, endDate) {
+  if (!startDate || !endDate) return 0;
+  const a = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+  const b = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+  const months = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth()) + 1;
+  return Math.max(0, months);
+}
+
 function eur(cents) {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format((cents || 0) / 100);
 }
@@ -211,6 +238,45 @@ function wireViews() {
   });
   const saved = localStorage.getItem(VIEW_KEY);
   setView(saved || "materials");
+}
+
+function wireKeyboardShortcuts() {
+  if (wireKeyboardShortcuts._ready) return;
+  wireKeyboardShortcuts._ready = true;
+
+  const VIEWS = ["materials", "budget", "planning"];
+  const isEditable = (el) => {
+    if (!el) return false;
+    const tag = String(el.tagName || "").toLowerCase();
+    return tag === "input" || tag === "textarea" || tag === "select" || el.isContentEditable;
+  };
+  const cycle = (delta) => {
+    const cur = localStorage.getItem(VIEW_KEY) || "materials";
+    const idx = Math.max(0, VIEWS.indexOf(cur));
+    const next = VIEWS[(idx + delta + VIEWS.length) % VIEWS.length];
+    setView(next);
+  };
+
+  window.addEventListener("keydown", (e) => {
+    // Ctrl+Shift+1/2/3 (jump), Ctrl+Shift+←/→ (cycle)
+    if (!e.ctrlKey || !e.shiftKey) return;
+    if (e.altKey || e.metaKey) return;
+    if (isEditable(e.target)) return;
+
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      cycle(-1);
+      return;
+    }
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      cycle(1);
+      return;
+    }
+    if (e.key === "1") { e.preventDefault(); setView("materials"); }
+    if (e.key === "2") { e.preventDefault(); setView("budget"); }
+    if (e.key === "3") { e.preventDefault(); setView("planning"); }
+  });
 }
 
 function renderPlanning(state) {
@@ -508,14 +574,24 @@ function applyGlobalBudgetDefaults(state) {
     b.labor_months_planned = 6; // Jan → Jun (planning)
     changed = true;
   }
+  if (typeof b.labor_start_ymd !== "string") {
+    // Début chantier mentionné: 21/11/2025 (les factures fournies sont en 2025)
+    b.labor_start_ymd = "2025-11-21";
+    changed = true;
+  }
   if (typeof b.labor_months_paid !== "number") {
-    // Fin janvier: main d'œuvre de janvier due / à payer
-    b.labor_months_paid = 1;
+    const start = parseYyyyMmDd(b.labor_start_ymd);
+    const monthsDue = calendarMonthsInclusive(start, new Date());
+    b.labor_months_paid = monthsDue || 1;
     changed = true;
   }
   if (typeof b.paid_kevin_cents !== "number") {
     // Valeur inconnue → par défaut on met 1 mois de MO (à ajuster avec vos virements réels)
     b.paid_kevin_cents = (b.labor_monthly_cents || 0) * (b.labor_months_paid || 0);
+    changed = true;
+  }
+  if (typeof b.paid_direct_cents !== "number") {
+    b.paid_direct_cents = 0;
     changed = true;
   }
 
@@ -526,6 +602,8 @@ function applyGlobalBudgetDefaults(state) {
   b.labor_months_paid = Math.max(0, Math.round(b.labor_months_paid));
   if (b.labor_months_paid > b.labor_months_planned) b.labor_months_paid = b.labor_months_planned;
   b.paid_kevin_cents = Math.max(0, Math.round(b.paid_kevin_cents));
+  b.paid_direct_cents = Math.max(0, Math.round(b.paid_direct_cents));
+  if (typeof b.labor_start_ymd !== "string") b.labor_start_ymd = yyyyMmDd(new Date());
 
   if (changed) saveState(state);
   return state;
@@ -536,13 +614,17 @@ function wireGlobalBudgetInputs(state) {
 
   const budgetInput = document.getElementById("projectBudgetInput");
   const paidKevinInput = document.getElementById("paidKevinInput");
+  const paidDirectInput = document.getElementById("paidDirectInput");
   const laborMonthlyInput = document.getElementById("laborMonthlyInput");
+  const laborStartInput = document.getElementById("laborStartInput");
   const laborMonthsPlannedInput = document.getElementById("laborMonthsPlannedInput");
   const laborMonthsPaidInput = document.getElementById("laborMonthsPaidInput");
 
   if (budgetInput && document.activeElement !== budgetInput) budgetInput.value = eurInput(b.total_budget_cents);
   if (paidKevinInput && document.activeElement !== paidKevinInput) paidKevinInput.value = eurInput(b.paid_kevin_cents || 0);
+  if (paidDirectInput && document.activeElement !== paidDirectInput) paidDirectInput.value = eurInput(b.paid_direct_cents || 0);
   if (laborMonthlyInput && document.activeElement !== laborMonthlyInput) laborMonthlyInput.value = eurInput(b.labor_monthly_cents);
+  if (laborStartInput && document.activeElement !== laborStartInput) laborStartInput.value = b.labor_start_ymd || "";
   if (laborMonthsPlannedInput && document.activeElement !== laborMonthsPlannedInput) laborMonthsPlannedInput.value = String(b.labor_months_planned);
   if (laborMonthsPaidInput && document.activeElement !== laborMonthsPaidInput) laborMonthsPaidInput.value = String(b.labor_months_paid);
 
@@ -565,11 +647,28 @@ function wireGlobalBudgetInputs(state) {
       render();
     });
   }
+  if (paidDirectInput && !paidDirectInput.dataset.ready) {
+    paidDirectInput.dataset.ready = "1";
+    paidDirectInput.addEventListener("blur", () => {
+      const v = parseEuroToCents(paidDirectInput.value, b.paid_direct_cents || 0);
+      b.paid_direct_cents = Math.max(0, v);
+      saveState(state);
+      render();
+    });
+  }
   if (laborMonthlyInput && !laborMonthlyInput.dataset.ready) {
     laborMonthlyInput.dataset.ready = "1";
     laborMonthlyInput.addEventListener("blur", () => {
       const v = parseEuroToCents(laborMonthlyInput.value, b.labor_monthly_cents);
       b.labor_monthly_cents = Math.max(0, v);
+      saveState(state);
+      render();
+    });
+  }
+  if (laborStartInput && !laborStartInput.dataset.ready) {
+    laborStartInput.dataset.ready = "1";
+    laborStartInput.addEventListener("change", () => {
+      b.labor_start_ymd = laborStartInput.value || b.labor_start_ymd;
       saveState(state);
       render();
     });
@@ -1017,6 +1116,11 @@ function renderTotals(items, invoiceItems, state, shownOverride) {
   const monthsPlanned = gb.labor_months_planned || 0;
   const monthsPaid = Math.min(monthsPlanned, gb.labor_months_paid || 0);
   const paidKevin = gb.paid_kevin_cents || 0;
+  const paidDirect = gb.paid_direct_cents || 0;
+  const paidTotal = paidKevin + paidDirect;
+
+  const start = parseYyyyMmDd(gb.labor_start_ymd);
+  const monthsDue = calendarMonthsInclusive(start, new Date());
 
   const laborBudget = laborMonthly * monthsPlanned;
   const laborSpent = laborMonthly * monthsPaid;
@@ -1026,9 +1130,10 @@ function renderTotals(items, invoiceItems, state, shownOverride) {
   const materialSpent = inv.cents;
   const materialRemaining = materialBudget - materialSpent;
 
-  const remainingGlobal = totalBudget - paidKevin;
+  const remainingGlobal = totalBudget - paidTotal;
   const materialPaidViaKevin = paidKevin - laborSpent;
-  const deltaVsInvoices = materialPaidViaKevin - materialSpent;
+  const materialPaidTotalEst = paidTotal - laborSpent;
+  const deltaVsInvoices = materialPaidTotalEst - materialSpent;
   const signDelta = deltaVsInvoices === 0 ? "" : (deltaVsInvoices > 0 ? "+" : "");
 
   const setText = (id, text) => {
@@ -1038,8 +1143,10 @@ function renderTotals(items, invoiceItems, state, shownOverride) {
 
   setText("projectBudgetTotal", eur(totalBudget));
   setText("projectBudgetSub", `Main d'œuvre: ${monthsPlanned} mois × ${eur(laborMonthly)} = ${eur(laborBudget)}`);
+  setText("paidTotal", eur(paidTotal));
+  setText("paidTotalSub", `Kevin ${eur(paidKevin)} + direct ${eur(paidDirect)} • MO due ~ ${monthsDue} mois (depuis ${gb.labor_start_ymd || "—"})`);
   setText("laborSpent", eur(laborSpent));
-  setText("laborSpentSub", `${monthsPaid}/${monthsPlanned} mois payés (${eur(laborMonthly)}/mois)`);
+  setText("laborSpentSub", `${monthsPaid}/${monthsPlanned} mois payés (${eur(laborMonthly)}/mois) • ${monthsDue} mois dus (depuis début)`);
   setText("laborRemaining", eur(laborRemaining));
   setText("laborRemainingSub", `${Math.max(0, monthsPlanned - monthsPaid)} mois restants`);
   setText("materialSpent", eur(materialSpent));
@@ -1047,9 +1154,9 @@ function renderTotals(items, invoiceItems, state, shownOverride) {
   setText("materialRemaining", eur(materialRemaining));
   setText("materialRemainingSub", `Budget matériaux: ${eur(materialBudget)}`);
   setText("paidKevinTotal", eur(paidKevin));
-  setText("paidKevinSub", `Payé - MO = ${eur(materialPaidViaKevin)} • Δ vs factures: ${signDelta}${eur(deltaVsInvoices)}`);
+  setText("paidKevinSub", `Payé total - MO payée = ${eur(materialPaidTotalEst)} • Δ vs factures: ${signDelta}${eur(deltaVsInvoices)}`);
   setText("projectRemainingTotal", eur(remainingGlobal));
-  setText("projectRemainingSub", `Budget total ${eur(totalBudget)} - payé Kevin ${eur(paidKevin)}`);
+  setText("projectRemainingSub", `Budget total ${eur(totalBudget)} - payé total ${eur(paidTotal)}`);
   wireGlobalBudgetInputs(state);
 
   // Budget par pièce
@@ -1133,6 +1240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.__stickyT = window.setTimeout(setStickyHeaderOffset, 80);
   });
   wireViews();
+  wireKeyboardShortcuts();
   wireActions();
   render();
 });

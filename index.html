@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Suivi Travaux 63B</title>
-    <link rel="stylesheet" href="./style.css?v=20260125-invoices2" />
+    <link rel="stylesheet" href="./style.css?v=20260125-budget3" />
   </head>
   <body>
     <header class="header">
@@ -23,6 +23,9 @@
           <button class="tab active" type="button" data-view="materials">Matériaux</button>
           <button class="tab" type="button" data-view="budget">Budget</button>
           <button class="tab" type="button" data-view="planning">Planning</button>
+        </div>
+        <div class="hint">
+          Raccourcis: <strong>Ctrl+Shift+1/2/3</strong> (onglets) • <strong>Ctrl+Shift+←/→</strong> (suivant/précédent)
         </div>
 
         <div class="controls">
@@ -139,8 +142,16 @@
               <input id="paidKevinInput" type="text" inputmode="decimal" placeholder="0" />
             </div>
             <div class="control">
+              <label for="paidDirectInput">Paiements directs (CB / Louis / etc) (cumul €)</label>
+              <input id="paidDirectInput" type="text" inputmode="decimal" placeholder="0" />
+            </div>
+            <div class="control">
               <label for="laborMonthlyInput">Main d'œuvre / mois (€)</label>
               <input id="laborMonthlyInput" type="text" inputmode="decimal" placeholder="2800" />
+            </div>
+            <div class="control">
+              <label for="laborStartInput">Début main d'œuvre (date)</label>
+              <input id="laborStartInput" type="date" />
             </div>
             <div class="control">
               <label for="laborMonthsPlannedInput">Mois prévus</label>
@@ -156,6 +167,11 @@
               <div class="card-title">Budget total (projet)</div>
               <div id="projectBudgetTotal" class="card-value">—</div>
               <div id="projectBudgetSub" class="card-sub">—</div>
+            </div>
+            <div class="card">
+              <div class="card-title">Total payé (Kevin + direct)</div>
+              <div id="paidTotal" class="card-value">—</div>
+              <div id="paidTotalSub" class="card-sub">—</div>
             </div>
             <div class="card">
               <div class="card-title">Payé à Kevin (total)</div>
@@ -260,8 +276,8 @@
       </section>
     </main>
 
-    <script src="./items.js?v=20260125-invoices2"></script>
-    <script src="./app.js?v=20260125-invoices2"></script>
+    <script src="./items.js?v=20260125-budget3"></script>
+    <script src="./app.js?v=20260125-budget3"></script>
   </body>
 </html>
 
